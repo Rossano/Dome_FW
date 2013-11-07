@@ -15,10 +15,8 @@
 #define ENCODER_RESOLUTION	2
 #define ROTATE_SLEEP		10
 
-const uint8_t turnLeftPin = 8;
-const uint8_t turnRightPin = 9;
-
-extern NilFIFO<int16_t, 2> turnfifo;
+//const uint8_t turnLeftPin = 8;
+//const uint8_t turnRightPin = 9;
 
 typedef enum/*  DomeState*/
 {
@@ -43,11 +41,16 @@ class DomeClass
 	DomeStateType getState();
 };
 
+extern NilFIFO<int16_t, 2> turnfifo;
 extern DomeClass Dome;
 
 void TurnLeft(int argc, char *argv[]);					//        Turn Dome to the left
 void TurnRight(int argc, char *argv[]);					//        Turn Dome to the right
 void Stop(int argc, char *argv[]);						//        Stop turning the Dome
+
+#ifndef ENCODER_SIMULATION
+	DomeStateType getDomeState();
+#endif
 
 #endif
 

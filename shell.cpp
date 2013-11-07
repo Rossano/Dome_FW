@@ -162,6 +162,8 @@ void ShellTask(void *p, char *line)
 	}
 }
 
+#ifdef USE_SHELL_THREAD
+
 NIL_WORKING_AREA(waShellThread, STACKSIZE);
 
 /// <summary>
@@ -192,13 +194,20 @@ NIL_THREAD(ShellThread, arg)
 		{
 			#ifdef DEBUG
 			//Serial.println("Received -> " + cmdString);
-			avrPrintf("Received -> " + cmdString);
+			avrPrintf("Received -> ");
+			//avrPrintf(cmdString.toCharArray());
 			#endif // DEBUG
 			
 			char buffer[CMD_STRING_LEN];
 			//        Create the char buffer pointer for the shell
 			char *buf = (char *)&buffer;
 			cmdString.toCharArray(buf, CMD_STRING_LEN);
+			#ifdef DEBUG
+			avrPrintf(buf);
+			avrPrintf("Buf Len: ");
+			//avrPrintf((const int)cmdString.length());
+			avrPrintf(inBufCount);
+			#endif // DEBUG
 			//        Execute the Shell task with the data coming for the PC
 			ShellTask((void *)ShellCommands, buf);
 			//        Print the prompt
@@ -222,6 +231,7 @@ NIL_THREAD(ShellThread, arg)
 	//return;
 }
 
+#endif // USE_SHELL_THREAD
 //
 //        USB-CDC Task
 //
@@ -240,8 +250,15 @@ void CDC_Task()
 		{
 			ch = (char)Serial.read();
 			cmdString += ch;
+			//cmdString.concat(ch);						
 		}
-		if (ch == '\n') cmdReady = true;
+		if (ch == '\n') cmdReady = true; 
+		#ifdef _DEBUG
+		avrPrintf("\n-> ");
+		avrPrintf(ch);
+		avrPrintf("\nLen-> ");
+		avrPrintf(inBufCount);
+		#endif // DEBUG
 	}
 }
 
@@ -381,5 +398,12 @@ void avrPrintf(const char * str)
 {
 	nilSemWait(&SerialOutSem);
 	Serial.print(str);
+	nilSemSignal(&SerialOutSem);
+}
+
+void avrPrintf(const int val)
+{
+	nilSemWait(&SerialOutSem);
+	Serial.print(val);
 	nilSemSignal(&SerialOutSem);
 }

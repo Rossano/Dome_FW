@@ -5,6 +5,7 @@
 #include <NilRTOS.h>
 #include <NilFIFO.h>
 
+#include "board.h"
 #include "dome.h"
 #include "encoder.h"
 #include "shell.h"
@@ -32,10 +33,16 @@ DomeStateType DomeClass::getState()
 
 bool DomeClass::turnLeft()
 {
-	if(state == NO_TURN) //DomeState::NO_TURN)
+	if(state == NO_TURN) 
 	{
-		state = TURN_LEFT;//DomeState::TURN_LEFT;
-		digitalWrite(turnLeftPin, HIGH);
+		state = TURN_LEFT;
+		#ifndef ENCODER_SIMULATION
+			digitalWrite(turnLeftPin, HIGH);
+		#else
+			avrPrintf("Start Turning LEFT\n");
+			startEncoderTimer();
+		#endif
+		avrPrintf("Exiting turning left function\n");
 		return true;
 	}
 	return false;
@@ -43,10 +50,15 @@ bool DomeClass::turnLeft()
 
 bool DomeClass::turnRight()
 {
-	if(state == NO_TURN)//DomeState::TURN_RIGHT)
+	if(state == NO_TURN)
 	{
-		state = TURN_RIGHT;//DomeState::TURN_RIGHT;
-		digitalWrite(turnRightPin, HIGH);
+		state = TURN_RIGHT;
+		#ifndef ENCODER_SIMULATION
+			digitalWrite(turnRightPin, HIGH);
+		#else
+			startEncoderTimer();
+		#endif
+		
 		return true;
 	}
 	return false;
@@ -54,10 +66,13 @@ bool DomeClass::turnRight()
 
 void DomeClass::stop()
 {
-	//if(state == DomeState::TURN_LEFT) digitalWrite(turnLeftPin, LOW);
-	//else if (state == DomeState::TURN_RIGHT) digitalWrite(turnRightPin, LOW);
-	if(state == TURN_LEFT) digitalWrite(turnLeftPin, LOW);
-	else if (state == TURN_RIGHT) digitalWrite(turnRightPin, LOW);
+	#ifndef ENCODER_SIMULATION
+		if(state == TURN_LEFT) digitalWrite(turnLeftPin, LOW);
+		else if (state == TURN_RIGHT) digitalWrite(turnRightPin, LOW);
+	#else
+		stopEncoderTimer();
+	#endif
+	
 	state = NO_TURN;
 }
 
@@ -65,13 +80,13 @@ void TurnLeft(int argc, char *argv[])
 {
 	(void) argv;
 	//        If there are arguments display and error message
-	if(argc > 0)
+	if(argc > 1)
 	{
 		Usage("turn_left <opt. # of steps>");
 		return;
 	}
 	//        Else  Turning Left
-	if(argc == 1)
+	if(argc == 0)
 	{
 		Dome.turnLeft();
 		avrPrintf("OK\r\n");
@@ -89,13 +104,13 @@ void TurnRight(int argc, char *argv[])
 {
 	(void) argv;
 	//        If there are arguments display and error message
-	if(argc > 0)
+	if(argc > 1)
 	{
 		Usage("turn_left <opt. # of steps>");
 		return;
 	}
 	//        Else  Turning Left
-	if(argc == 1)
+	if(argc == 0)
 	{
 		Dome.turnRight();
 		avrPrintf("OK\r\n");
@@ -133,6 +148,7 @@ NIL_THREAD(DomeThread, arg)
 	{
 		int16_t *p = turnfifo.waitData(TIME_INFINITE);
 		
+		avrPrintf("Using Dome Thread\n");
 		unsigned long posInitial = Encoder.Position();
 		unsigned long posFinal;
 		
@@ -141,7 +157,7 @@ NIL_THREAD(DomeThread, arg)
 			//
 			//	Turn Left : carry out final position to reach
 			//
-			if(posInitial + *p > MAX_COUNT) posFinal = posInitial + *p - MAX_COUNT;
+			if(posInitial + *p > MAX_COUNT-1) posFinal = posInitial + *p - MAX_COUNT;
 			else posFinal = posInitial + *p;
 		}
 		else
@@ -174,4 +190,9 @@ NIL_THREAD(DomeThread, arg)
 		turnfifo.signalFree();
 		avrPrintf("OK\r\n");
 	}
+}
+
+DomeStateType getDomeState()
+{
+//	return Dome.state;
 }

@@ -4,18 +4,33 @@
 
 #include <NilRTOS.h>
 
+#include "board.h"
 #include "encoder.h"
 #include "shell.h"
 
-#define DEBUG
+//#define DEBUG
+#define ENCODER_SIMULATION
+#define DEBUG_TIMER_INTERVAL_US		3000000
+#undef TIMER_DEBUG
 
-#ifdef DEBUG
-#include "debug.h"
-#endif // DEBUG
+#ifdef ENCODER_SIMULATION 
+#include <NilTimer1.h>
+//#include "debug.h"
+#endif // ENCODER_SIMULATION
 
 EncoderClass Encoder;
 
+float gearRation = 1.0;
+
+#ifdef ENCODER_SIMULATION 
+//extern SEMAPHORE_DECL(DebugSem, 0);
+	#include "dome.h"
+	SEMAPHORE_DECL(DebugSem, 0);
+	extern DomeClass Dome;
+#else
 SEMAPHORE_DECL(encoderSem, 0);
+#endif // ENCODER_SIMULATION
+
 
 extern void avrPrintf(const char * str);
 
@@ -32,17 +47,21 @@ EncoderClass::EncoderClass(unsigned long pos /* = 0 */)
 }
 
 void EncoderClass::init()
-{
+{	
 	pinMode(encoderA, INPUT_PULLUP);
 	pinMode(encoderB, INPUT_PULLUP);
 	pinMode(encoderHome, INPUT_PULLUP);
 	digitalWrite(encoderA, HIGH);
 	digitalWrite(encoderB, HIGH);
 	digitalWrite(encoderHome, HIGH);
-	
-	attachInterrupt(IRQ_PINA, encoderISR, RISING);
-	attachInterrupt(IRQ_PINB, encoderISR, RISING);
-	attachInterrupt(IRQ_HOME, homeISR, RISING);
+	#ifdef ENCODER_SIMULATION 
+	///	DO NOTHING
+		//nilTimer1Start(DEBUG_TIMER_INTERVAL_US);
+	#else	
+		attachInterrupt(IRQ_PINA, encoderISR, RISING);
+		attachInterrupt(IRQ_PINB, encoderISR, RISING);
+		attachInterrupt(IRQ_HOME, homeISR, RISING);
+	#endif //ENCODER_SIMULATION		
 }
 
 unsigned long EncoderClass::Position()
@@ -71,6 +90,31 @@ bool EncoderClass::channelHome()
 {
 	return digitalRead(encoderHome);
 }
+
+#ifdef ENCODER_SIMULATION //DEBUG
+
+NIL_WORKING_AREA(waDebugThread, 64);
+NIL_THREAD(DebugThread, arg)
+{
+	#ifdef TIMER_DEBUG
+	//Serial.println("Starting Debug Timer");
+	avrPrintf("Starting Debug Timer");
+	#endif
+	//nilTimer1Start(DEBUG_TIMER_INTERVAL_US);
+	
+	while(TRUE)
+	{
+		nilTimer1Wait();
+		nilSemSignal(&DebugSem);
+		#ifdef TIMER_DEBUG
+		//Serial.println("Tick!\nWaiting Free");
+		avrPrintf("Tick");
+		avrPrintf("Waiting Free");
+		#endif // TIMER_DEBUG
+	}
+}
+
+#else
 
 void encoderISR()
 {
@@ -102,6 +146,8 @@ void homeISR()
 	NIL_IRQ_EPILOGUE();
 }
 
+#endif // not def DEBUG
+
 void getPosition(int argc, char *argv[])
 {
 	(void) argv;
@@ -123,15 +169,38 @@ NIL_THREAD(EncoderThread, arg)
 {
 	while (TRUE)
 	{
-	#ifdef DEBUG
-		nilSemWait(&DebugSem);
-	#else
-		nilSemWait(&encoderSem);
-	#endif
+		#ifdef ENCODER_SIMULATION 
+			nilSemWait(&DebugSem);
+			nilSysLock();
+			avrPrintf("Tick\n");
+			if(Dome.getState() == TURN_RIGHT)
+			{
+				if(Encoder.Position() == MAX_COUNT-1) Encoder.SetPosition(0);
+				else Encoder.SetPosition(Encoder.Position() + 1);	
+			}
+			else if(Dome.getState() == TURN_LEFT)
+			{
+				if(Encoder.Position() == 0) Encoder.SetPosition(MAX_COUNT - 1);
+				else Encoder.SetPosition(Encoder.Position() - 1);
+			}
+			nilSysUnlock();
+		#else
+			nilSemWait(&encoderSem);
+		#endif	//	ENCODER_SIMULATION
 		//Serial.print("ARD> Position -> ");
 		//Serial.println(Encoder.Position());
 		char buf[10];
 		avrPrintf("Position -> ");
 		avrPrintf(ltoa(Encoder.Position(), buf, 10));
 	}
+}
+
+void startEncoderTimer()
+{
+	nilTimer1Start(DEBUG_TIMER_INTERVAL_US);
+}
+
+void stopEncoderTimer()
+{
+	nilTimer1Stop();
 }

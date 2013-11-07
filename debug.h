@@ -1,6 +1,6 @@
 // debug.h
 
-#if defined(DEBUG)
+//#if defined(DEBUG)
 
 #ifndef _DEBUG_h
 #define _DEBUG_h
@@ -12,9 +12,12 @@
 #endif
 
 #define DEBUG_TIMER_INTERVAL_US		3000000
+#define TIMER_DEBUG
+#undef TIMER_DEBUG
 
+//extern SEMAPHORE_DECL(DebugSem, 0);
 SEMAPHORE_DECL(DebugSem, 0);
 
 #endif
 
-#endif
+//#endif

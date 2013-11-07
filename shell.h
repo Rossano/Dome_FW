@@ -22,6 +22,10 @@
 #define CMD_STRING_LEN				16					//	Command String Lenght
 #define PROMPT						"AVR> "				//	Shell prompt
 #define SOL_LED						13					//	Sign of Life LED
+#undef USE_SHELL_THREAD									//	Activate/Deactivate the use of the shell as thread
+
+//	Debug Activation/Deactivation
+#define DEBUG
 
 //
 //	Shell Variable Section
@@ -85,7 +89,7 @@ void CmdSystime(int argc, char *argv[]);                                //      
 
 //
 //        Definition of the shell commands:
-//        This data structure links the command to the corrisponding action function
+//        This data structure links the command to the corresponding action function
 //
 static ShellCommand_t ShellCommands[] =
 {
@@ -130,6 +134,7 @@ void Usage(char *str);
 int CmdExec(const ShellCommand_t *scp, char *name, int argc, char *argv[]);
 void ListCommands(ShellCommand_t *scp);
 void avrPrintf(const char * str);
+void avrPrintf(const int val);
 void ShellTask(void *p, char *line);
 void CDC_Task();
 
