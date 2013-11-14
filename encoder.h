@@ -21,12 +21,11 @@
 ///		Activate the simulation of the encoder
 #define ENCODER_SIMULATION
 
-extern float gearRation;
+extern float gearRatio;
 
 //const uint8_t encoderA = 3;
 //const uint8_t encoderB = 2;
 //const uint8_t encoderHome = 0;
-
 
 class EncoderClass
 {
@@ -44,9 +43,12 @@ class EncoderClass
 	bool channelA();
 	bool channelB();
 	bool channelHome();
+	bool MultiActivate;
 };
 
 extern EncoderClass Encoder;
+
+//SEMAPHORE_DECL(EncoderCountSem, 0);
 
 void encoderISR();
 void homeISR();

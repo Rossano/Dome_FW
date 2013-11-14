@@ -28,9 +28,10 @@ float gearRation = 1.0;
 	SEMAPHORE_DECL(DebugSem, 0);
 	extern DomeClass Dome;
 #else
-SEMAPHORE_DECL(encoderSem, 0);
+	SEMAPHORE_DECL(encoderSem, 0);
 #endif // ENCODER_SIMULATION
 
+static SEMAPHORE_DECL(EncoderCountSem, 0);
 
 extern void avrPrintf(const char * str);
 
@@ -43,11 +44,12 @@ extern void avrPrintf(const char * str);
 EncoderClass::EncoderClass(unsigned long pos /* = 0 */)
 {
 	_position = pos;
-	init();	
+	init();		
 }
 
 void EncoderClass::init()
 {	
+	MultiActivate = false;
 	pinMode(encoderA, INPUT_PULLUP);
 	pinMode(encoderB, INPUT_PULLUP);
 	pinMode(encoderHome, INPUT_PULLUP);
@@ -106,11 +108,16 @@ NIL_THREAD(DebugThread, arg)
 	{
 		nilTimer1Wait();
 		nilSemSignal(&DebugSem);
+		nilSemSignal(&EncoderCountSem);
 		#ifdef TIMER_DEBUG
 		//Serial.println("Tick!\nWaiting Free");
 		avrPrintf("Tick");
 		avrPrintf("Waiting Free");
 		#endif // TIMER_DEBUG
+		if (Encoder.MultiActivate)
+		{
+			nilSemSignal(&EncoderCountSem);
+		}
 	}
 }
 
@@ -134,6 +141,10 @@ void encoderISR()
 		nilSysUnlockFromIsr();
 	}
 	nilSemSignalI(&encoderSem);
+	if (Encoder.MultiActivate)
+	{
+		nilSemSignalI(&EncoderCountSem);
+	}
 	NIL_IRQ_EPILOGUE();
 }
 

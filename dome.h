@@ -12,7 +12,7 @@
 #include <NilFIFO.h>
 
 #define STACKSIZE			64
-#define ENCODER_RESOLUTION	2
+#define ENCODER_RESOLUTION	1
 #define ROTATE_SLEEP		10
 
 //const uint8_t turnLeftPin = 8;
