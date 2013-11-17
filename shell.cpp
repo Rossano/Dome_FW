@@ -407,3 +407,17 @@ void avrPrintf(const int val)
 	Serial.print(val);
 	nilSemSignal(&SerialOutSem);
 }
+
+void avrPrintf(const uint32_t val)
+{
+	nilSemWait(&SerialOutSem);
+	Serial.print(val);
+	nilSemSignal(&SerialOutSem);
+}
+
+void avrPrintf(const double val)
+{
+	nilSemWait(&SerialOutSem);
+	Serial.print(val);
+	nilSemSignal(&SerialOutSem);
+}

@@ -16,7 +16,7 @@
 #define SHELL_MAX_LINE_LENGTH       16					//	Shell input buffer length
 #define SHELL_MAX_ARGUMENTS         4					//	Shell MAX number of arguments
 #define SHELL_PROMPT                "AVR> "				//	Shell prompt
-#define FW_VERSION                  "0.1.0"				//	Firmware Revision
+#define FW_VERSION                  "0.4.0"				//	Firmware Revision
 #define OS_VERSION                  NIL_KERNEL_VERSION	//	OS type and revision
 #define CR							"\r\n"				//	Shell EOL characters
 #define CMD_STRING_LEN				16					//	Command String Lenght
@@ -25,7 +25,7 @@
 #undef USE_SHELL_THREAD									//	Activate/Deactivate the use of the shell as thread
 
 //	Debug Activation/Deactivation
-#define DEBUG
+#undef DEBUG
 
 //
 //	Shell Variable Section
@@ -135,6 +135,8 @@ int CmdExec(const ShellCommand_t *scp, char *name, int argc, char *argv[]);
 void ListCommands(ShellCommand_t *scp);
 void avrPrintf(const char * str);
 void avrPrintf(const int val);
+void avrPrintf(const uint32_t val);
+void avrPrintf(const double val);
 void ShellTask(void *p, char *line);
 void CDC_Task();
 

@@ -161,8 +161,10 @@ NIL_THREAD(DomeThread, arg)
 		avrPrintf("Using Dome Thread\nReceived data is: ");
 		avrPrintf(*p);
 		avrPrintf(CR);
-		unsigned long posInitial = Encoder.Position();
-		unsigned long posFinal;
+		//unsigned long posInitial = Encoder.Position();
+		//unsigned long posFinal
+		uint32_t posInitial = Encoder.Position();
+		uint32_t posFinal;
 		avrPrintf("Dome Initial Position: ");
 		avrPrintf(posInitial);
 		avrPrintf(CR);

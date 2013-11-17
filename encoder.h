@@ -17,11 +17,18 @@
 //#define IRQ_PINA	0
 //#define IRQ_PINB	1
 //#define IRQ_HOME	2
+#define ENCODER_RESOLUTION	16
+#define ENCODER_GEAR_RATIO  1.0
+#define ENCODER_MAX_COUNT	floor(ENCODER_RESOLUTION * ENCODER_GEAR_RATIO)
 #define MAX_COUNT	9
 ///		Activate the simulation of the encoder
 #define ENCODER_SIMULATION
+#define RETURN_ANGLE		1
 
-extern float gearRatio;
+//extern float gearRatio;
+//extern uint16_t encoderResolution;
+//extern float gearRation = 1.0;
+//extern uint32_t encoderMaxCount;
 
 //const uint8_t encoderA = 3;
 //const uint8_t encoderB = 2;
@@ -29,20 +36,28 @@ extern float gearRatio;
 
 class EncoderClass
 {
+ public:
+	uint16_t encoderResolution;
+	double gearRatio;
+	uint32_t encoderMaxCount;
  private:
-	unsigned long _position;
+	uint32_t _position;
 	//void encoderISR();
 	//void homeISR();
 	
  public:
-	EncoderClass(): _position(0) {init();}
-	EncoderClass(unsigned long pos /*= 0*/);
+	EncoderClass();//: _position(0) {init();}
+	EncoderClass(uint32_t pos /*= 0*/);
 	void init();
-	unsigned long Position();
+	uint32_t Position();
 	void SetPosition(unsigned long pos);
 	bool channelA();
 	bool channelB();
 	bool channelHome();
+	EncoderClass& operator++();
+	EncoderClass operator++(int);
+	EncoderClass& operator--();
+	EncoderClass operator--(int);
 	bool MultiActivate;
 };
 

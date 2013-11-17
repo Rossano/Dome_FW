@@ -20,7 +20,9 @@
 
 EncoderClass Encoder;
 
-float gearRation = 1.0;
+//uint16_t encoderResolution;
+//float gearRation = 1.0;
+//uint32_t encoderMaxCount;
 
 #ifdef ENCODER_SIMULATION 
 //extern SEMAPHORE_DECL(DebugSem, 0);
@@ -35,13 +37,13 @@ static SEMAPHORE_DECL(EncoderCountSem, 0);
 
 extern void avrPrintf(const char * str);
 
-//EncoderClass::EncoderClass()
-//{
-	//_position = 0;
-	//init();
-//}
+EncoderClass::EncoderClass()
+{
+	_position = 0;
+	init();
+}
 
-EncoderClass::EncoderClass(unsigned long pos /* = 0 */)
+EncoderClass::EncoderClass(uint32_t pos /* = 0 */)
 {
 	_position = pos;
 	init();		
@@ -50,6 +52,14 @@ EncoderClass::EncoderClass(unsigned long pos /* = 0 */)
 void EncoderClass::init()
 {	
 	MultiActivate = false;
+	encoderResolution = ENCODER_RESOLUTION;
+	gearRatio = ENCODER_GEAR_RATIO;
+	double foo = encoderResolution * gearRatio;
+	encoderMaxCount = 15;//(uint32_t)foo;
+	avrPrintf("Encoder MAX cnt -> ");
+	avrPrintf(encoderMaxCount);
+//	avrPrintf(foo);
+	avrPrintf(CR);
 	pinMode(encoderA, INPUT_PULLUP);
 	pinMode(encoderB, INPUT_PULLUP);
 	pinMode(encoderHome, INPUT_PULLUP);
@@ -66,12 +76,12 @@ void EncoderClass::init()
 	#endif //ENCODER_SIMULATION		
 }
 
-unsigned long EncoderClass::Position()
+uint32_t EncoderClass::Position()
 {
 	return _position;
 }
 
-void EncoderClass::SetPosition(unsigned long pos)
+void EncoderClass::SetPosition(uint32_t pos)
 {
 	nilSysLock();
 	_position = pos;
@@ -91,6 +101,44 @@ bool EncoderClass::channelB()
 bool EncoderClass::channelHome()
 {
 	return digitalRead(encoderHome);
+}
+
+EncoderClass& EncoderClass::operator ++()
+{
+	return *this;
+}
+
+EncoderClass EncoderClass::operator ++(int)
+{
+	if(_position == encoderMaxCount)
+	{
+		_position = 0;
+		return 0;
+	}
+	else
+	{
+		_position++;
+		return _position;
+	}
+}
+
+EncoderClass& EncoderClass::operator --()
+{
+	return *this;
+}
+
+EncoderClass EncoderClass::operator --(int)
+{
+	if(_position == 0)
+	{
+		_position = encoderMaxCount;
+		return encoderMaxCount;
+	}
+	else
+	{
+		_position--;
+		return _position;
+	}
 }
 
 #ifdef ENCODER_SIMULATION //DEBUG
@@ -170,8 +218,15 @@ void getPosition(int argc, char *argv[])
 	}
 	char buf[10];
 	//        Else display a string stating that it is not implemented
-	avrPrintf("Position -> ");
-	avrPrintf(ltoa(Encoder.Position(), buf, 10));
+	avrPrintf("Position= ");
+	#if (RETURN_ANGLE == 1)
+		double angle = 360 * ((double)Encoder.Position() / (double)Encoder.encoderMaxCount);
+		avrPrintf(angle);
+		avrPrintf("\nCounter= ");
+		avrPrintf(ltoa(Encoder.Position(), buf, 10));
+	#else
+		avrPrintf(ltoa(Encoder.Position(), buf, 10));
+	#endif
 	avrPrintf("OK\r\n");
 }
 
@@ -186,13 +241,15 @@ NIL_THREAD(EncoderThread, arg)
 			avrPrintf("Tick\n");
 			if(Dome.getState() == TURN_RIGHT)
 			{
-				if(Encoder.Position() == MAX_COUNT-1) Encoder.SetPosition(0);
-				else Encoder.SetPosition(Encoder.Position() + 1);	
+				//if(Encoder.Position() == MAX_COUNT-1) Encoder.SetPosition(0);
+				//else Encoder.SetPosition(Encoder.Position() + 1);
+				Encoder++;	
 			}
 			else if(Dome.getState() == TURN_LEFT)
 			{
-				if(Encoder.Position() == 0) Encoder.SetPosition(MAX_COUNT - 1);
-				else Encoder.SetPosition(Encoder.Position() - 1);
+				//if(Encoder.Position() == 0) Encoder.SetPosition(MAX_COUNT - 1);
+				//else Encoder.SetPosition(Encoder.Position() - 1);
+				Encoder--;
 			}
 			nilSysUnlock();
 		#else
@@ -201,8 +258,14 @@ NIL_THREAD(EncoderThread, arg)
 		//Serial.print("ARD> Position -> ");
 		//Serial.println(Encoder.Position());
 		char buf[10];
-		avrPrintf("Position -> ");
-		avrPrintf(ltoa(Encoder.Position(), buf, 10));
+		avrPrintf("Position= ");
+		#if (RETURN_ANGLE == 1)
+			double angle = (360 * (double)Encoder.Position()) / 16.0;//(double)ENCODER_RESOLUTION; //Encoder.encoderMaxCount);
+			avrPrintf(angle);
+			avrPrintf(CR);
+		#else
+			avrPrintf(ltoa(Encoder.Position(), buf, 10));
+		#endif
 	}
 }
 
