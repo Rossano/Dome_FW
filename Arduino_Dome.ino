@@ -14,6 +14,7 @@
 #include "encoder.h"		//	Encoder related inclusions
 #include "dome.h"			//	Dome control related inclusions
 #include "shell.h"			//	Shell related inclusions
+#include "MemoryFree.h"
 
 /// 
 ///	Debug inclusions, use this to simulate the encoder with a timer

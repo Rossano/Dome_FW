@@ -45,7 +45,7 @@
       </ToolNumber>
       <Channel>
         <host>127.0.0.1</host>
-        <port>23898</port>
+        <port>13192</port>
         <ssl>False</ssl>
       </Channel>
     </com_atmel_avrdbg_tool_simulator>
@@ -560,6 +560,12 @@ vmresolved.tools.path=C:\Program Files (x86)\Arduino\hardware\tools\avr
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="encoder.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="MemoryFree.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="MemoryFree.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="shell.cpp">

@@ -133,6 +133,8 @@ char * Strtok(char *str, const char *delim, char **saveptr);
 void Usage(char *str);
 int CmdExec(const ShellCommand_t *scp, char *name, int argc, char *argv[]);
 void ListCommands(ShellCommand_t *scp);
+void printDouble(double val, byte precision);
+void printFloat(float value, int places);
 void avrPrintf(const char * str);
 void avrPrintf(const int val);
 void avrPrintf(const uint32_t val);

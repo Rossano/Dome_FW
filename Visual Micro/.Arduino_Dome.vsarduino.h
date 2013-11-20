@@ -19,6 +19,8 @@ extern "C" void __cxa_pure_virtual() {;}
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\variants\micro\pins_arduino.h" 
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\cores\arduino\arduino.h"
 #include "C:\Users\Ross\Documents\Arduino\Arduino_Dome\Arduino_Dome.ino"
+#include "C:\Users\Ross\Documents\Arduino\Arduino_Dome\MemoryFree.cpp"
+#include "C:\Users\Ross\Documents\Arduino\Arduino_Dome\MemoryFree.h"
 #include "C:\Users\Ross\Documents\Arduino\Arduino_Dome\board.h"
 #include "C:\Users\Ross\Documents\Arduino\Arduino_Dome\debug.cpp"
 #include "C:\Users\Ross\Documents\Arduino\Arduino_Dome\debug.h"

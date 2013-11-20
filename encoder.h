@@ -23,7 +23,7 @@
 #define MAX_COUNT	9
 ///		Activate the simulation of the encoder
 #define ENCODER_SIMULATION
-#define RETURN_ANGLE		1
+#define RETURN_ANGLE		0
 
 //extern float gearRatio;
 //extern uint16_t encoderResolution;

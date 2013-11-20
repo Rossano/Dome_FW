@@ -7,6 +7,7 @@
 #include "board.h"
 #include "encoder.h"
 #include "shell.h"
+#include "MemoryFree.h"
 
 //#define DEBUG
 #define ENCODER_SIMULATION
@@ -229,6 +230,7 @@ void getPosition(int argc, char *argv[])
 	#endif
 	avrPrintf("OK\r\n");
 }
+#include "MemoryFree.h"
 
 NIL_WORKING_AREA(waEncoderThread, STACKSIZE);
 NIL_THREAD(EncoderThread, arg)
@@ -261,11 +263,14 @@ NIL_THREAD(EncoderThread, arg)
 		avrPrintf("Position= ");
 		#if (RETURN_ANGLE == 1)
 			double angle = (360 * (double)Encoder.Position()) / 16.0;//(double)ENCODER_RESOLUTION; //Encoder.encoderMaxCount);
-			avrPrintf(angle);
+			avrPrintf(angle);			
 			avrPrintf(CR);
 		#else
 			avrPrintf(ltoa(Encoder.Position(), buf, 10));
 		#endif
+		avrPrintf("freeMemory() = ");		
+		avrPrintf(freeMemory());
+		avrPrintf(CR);
 	}
 }
 

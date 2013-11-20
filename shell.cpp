@@ -418,6 +418,88 @@ void avrPrintf(const uint32_t val)
 void avrPrintf(const double val)
 {
 	nilSemWait(&SerialOutSem);
-	Serial.print(val);
+	//Serial.print(val);
+	printDouble(val, 2);
+	//printFloat(val, 2);
 	nilSemSignal(&SerialOutSem);
+}
+
+void printDouble( double val, byte precision)
+{
+	// prints val with number of decimal places determine by precision
+	// precision is a number from 0 to 6 indicating the desired decimial places
+	// example: printDouble( 3.1415, 2); // prints 3.14 (two decimal places)
+	
+	//Serial.print("Position= ");//Entering printDouble\n");
+	
+	//Serial.print("dummy dummy dummy\n");
+	//Serial.print (int(val));  //prints the int part
+	avrPrintf(int(val));
+	if( precision > 0) {
+		//Serial.print("."); // print the decimal point
+		avrPrintf(".");
+		unsigned long frac;
+		unsigned long mult = 1;
+		byte padding = precision -1;
+		while(precision--)
+		mult *=10;
+		
+		if(val >= 0)
+		frac = (val - int(val)) * mult;
+		else
+		frac = (int(val)- val ) * mult;
+		unsigned long frac1 = frac;
+		while( frac1 /= 10 )
+		padding--;
+		while(  padding--)
+		//Serial.print("0");
+		avrPrintf("0");
+		//Serial.print(frac,DEC) ;
+		avrPrintf((int)frac);
+		//Serial.print(frac);
+	}
+	//Serial.println("Exiting printDouble");
+	//Serial.println(" ");
+}
+
+void printFloat(float value, int places)
+{
+	int digit;
+	float tens = 0.1;
+	int tenscount = 0;
+	int i;
+	float tempfloat = value;
+	float d = 0.5;
+	
+	if (value < 0) d *= -1.0;
+	for (i=0; i<places; i++) d /= 10.0;
+	
+	tempfloat += d;	
+	if (value < 0 ) tempfloat *= -1.0;
+	while ((tens * 10.0) <= tempfloat)
+	{
+		tens *= 10.0;
+		tenscount++;
+	}
+	
+	if (value < 0) Serial.print('-');
+	if (tenscount == 0) Serial.print(0, DEC);
+	
+	for (i=0; i<tenscount; i++)
+	{
+		digit = (int)(tempfloat / tens);
+		Serial.print(digit, DEC);
+		tempfloat -= ((float)digit * tens);
+		tens /= 10.0;
+	}
+	
+	if (places <= 0) return;
+	Serial.print('.');
+	for (i=0; i<places; i++)
+	{
+		tempfloat *= 10.0;
+		digit = (int)tempfloat;
+		Serial.print(digit, DEC);
+		tempfloat -= (float)digit;
+	}
 }
