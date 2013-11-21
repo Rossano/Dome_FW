@@ -1,4 +1,8 @@
-// encoder.h
+//////////////////////////////////////////////////////////////////////////
+///
+///		encoder.h
+///
+//////////////////////////////////////////////////////////////////////////
 
 #ifndef _ENCODER_h
 #define _ENCODER_h
@@ -9,73 +13,95 @@
 	#include "WProgram.h"
 #endif
 
-//#ifdef DEBUG
-//#include "debug.h"
-//#endif // DEBUG
+//////////////////////////////////////////////////////////////////////////
+///
+///	Defines Section
+///
+//////////////////////////////////////////////////////////////////////////
 
-#define STACKSIZE	64
-//#define IRQ_PINA	0
-//#define IRQ_PINB	1
-//#define IRQ_HOME	2
-#define ENCODER_RESOLUTION	16
-#define ENCODER_GEAR_RATIO  1.0
+#define STACKSIZE	64				//	Thread stacksize
+///
+///		Default definitions for the Encoder Configuration
+/// 
+#define ENCODER_RESOLUTION	16		//	Resolution of the Encoder
+#define ENCODER_GEAR_RATIO  1.0		//	Ratio between Encoder Gear and Final Gear
+//	Max counts to make a full turn of the final gear
 #define ENCODER_MAX_COUNT	floor(ENCODER_RESOLUTION * ENCODER_GEAR_RATIO)
-#define MAX_COUNT	9
-///		Activate the simulation of the encoder
-#define ENCODER_SIMULATION
-#define RETURN_ANGLE		0
+#define MAX_COUNT	9				//	Max counts to make a full turn of the final gear
+#define ENCODER_SIMULATION			//	Activate the simulation of the encoder
+#define RETURN_ANGLE		0		//	0-> Activate the position return as circular buffer count
+									//	1-> Activate the position return as angle
 
-//extern float gearRatio;
-//extern uint16_t encoderResolution;
-//extern float gearRation = 1.0;
-//extern uint32_t encoderMaxCount;
+//////////////////////////////////////////////////////////////////////////
+///
+///	Class Definition Section
+///
+//////////////////////////////////////////////////////////////////////////
 
-//const uint8_t encoderA = 3;
-//const uint8_t encoderB = 2;
-//const uint8_t encoderHome = 0;
-
+/// <summary>
+/// Class to implement and manage the Incremental Encoder.
+/// </summary>
+/// <param name="encoderResolution">Stores the encoder pulses per turn</param>
+/// <param name="gearRatio">Stores the encoder transmission ratio.</param>
+/// <param name="encoderMaxCount">Stores the encoder circular buffer lenght.</param>
+/// <param name="MultiActivate">Stores activation flag for the automatic step turning.</param>
+/// <param name="_positiono">[Private] Stores the encoder absolute position.</param>
+/// <param name="EncoderClass()">Default Constructor.</param>
+/// <param name="EncoderClass(pos)">Constructor setting the position.</param>
+/// <param name="init()">Method to initialize the Encoder data structure.</param>
+/// <param name="Position()">Method to read the encoder absolute position.</param>
+/// <param name="SetPosition()">Method to set the Encoder absolute position.</param>
+/// <param name="channelA()">Method to return the Encoder A channel state.</param>
+/// <param name="channelB()">Method to return the Encoder B channel state.</param>
+/// <param name="channelHome()">Method to return the HOME channel state.</param>
+/// <param name="operator ++">Method to Increase the Encoder absolute position.</param>
+/// <param name="operator --">Method to Decrease the Encoder absolute position.</param>
 class EncoderClass
 {
  public:
-	uint16_t encoderResolution;
-	double gearRatio;
-	uint32_t encoderMaxCount;
+	uint16_t encoderResolution;				//	Resolution of the Encoder
+	double gearRatio;						//	Encoder Gear / Final Gear ration => must be > 1
+	uint32_t encoderMaxCount;				//	# of pulses to make a full turn of the final gear
  private:
-	uint32_t _position;
-	//void encoderISR();
-	//void homeISR();
+	uint32_t _position;						//	Actual absolute Encoder position
 	
  public:
-	EncoderClass();//: _position(0) {init();}
-	EncoderClass(uint32_t pos /*= 0*/);
-	void init();
-	uint32_t Position();
-	void SetPosition(unsigned long pos);
-	bool channelA();
-	bool channelB();
-	bool channelHome();
+	EncoderClass();							//	Default Constructor
+	EncoderClass(uint32_t pos);				//	Constructor setting up the Encoder absolute position
+	void init();							//	Initialize the encoder HW and data structure
+	uint32_t Position();					//	Returns the actual Encoder absolute position
+	void SetPosition(unsigned long pos);	//	Set the encoder position
+	bool channelA();						//	Returns encoder signal A state
+	bool channelB();						//	Returns encoder signal B state
+	bool channelHome();						//	Returns HOME flag state
+	//	Operators ++ & -- implementation to have more readable code 
 	EncoderClass& operator++();
 	EncoderClass operator++(int);
 	EncoderClass& operator--();
 	EncoderClass operator--(int);
-	bool MultiActivate;
+	bool MultiActivate;						//	Used to tells code that a fixed # of turns have to be done
 };
 
 extern EncoderClass Encoder;
 
-//SEMAPHORE_DECL(EncoderCountSem, 0);
+//////////////////////////////////////////////////////////////////////////
+///
+///	Function Prototype Section
+///
+//////////////////////////////////////////////////////////////////////////
 
-void encoderISR();
-void homeISR();
-void getPosition(int argc, char *argv[]);
+void encoderISR();							//	Encoder pulse reception ISR
+void homeISR();								//	Home pulse reception ISR
+void getPosition(int argc, char *argv[]);	//	Shell command to read the encoder position
 
 //////////////////////////////////////////////////////////////////////////
 ///	Function Wraps-up to start/stop the encoder timer 
+///	only used when simulating the Encoder
 ///	(to avoid to export too many data structures)
 //////////////////////////////////////////////////////////////////////////
 #ifdef ENCODER_SIMULATION
-	void startEncoderTimer();
-	void stopEncoderTimer();
+	void startEncoderTimer();				//	Start the encoder simulation timer
+	void stopEncoderTimer();				//	Stop the encoder simulation timer
 #endif // ENCODER_SIMULATION
 
 #endif

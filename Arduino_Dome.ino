@@ -14,7 +14,12 @@
 #include "encoder.h"		//	Encoder related inclusions
 #include "dome.h"			//	Dome control related inclusions
 #include "shell.h"			//	Shell related inclusions
-#include "MemoryFree.h"
+
+#undef MEMORY_CHECK
+#ifdef MEMORY_CHECK
+	#include "MemoryFree.h"
+#endif
+
 
 /// 
 ///	Debug inclusions, use this to simulate the encoder with a timer
@@ -33,10 +38,8 @@
 ///
 //////////////////////////////////////////////////////////////////////////
 
-///		Thread Stacksize
-#define STACKSIZE	64			
-/////		Activate the simulation of the encoder
-//#define ENCODER_SIMULATION
+#define STACKSIZE	64			//	Thread stack size
+#define BAUDRATE	57600		//	Baudrate value
 
 //////////////////////////////////////////////////////////////////////////
 ///
@@ -126,10 +129,9 @@ void setup()
 	//
 	//        Initialize the board, setting up all the I/O in a known state
 	//
-	//initBoard();	
 	
 	//        Initialize the USB link for PC communication
-	Serial.begin(9600);
+	Serial.begin(BAUDRATE); 
 	//
 	//        Until the USB CDC is not connected to the PC the yellow LED on Arduino is
 	//        blinking, then it will be fix
@@ -146,7 +148,6 @@ void setup()
 	analogWrite(SOL_LED, 32);
 	//        Write the prompt on serial link
 	avrPrintf(PROMPT);
-	//Serial.print(PROMPT);
 	//
 	//	Starts NilRTOS scheduler
 	//
@@ -171,6 +172,7 @@ void loop()
 		if (cmdReady)
 		{
 			#ifdef DEBUG
+				//	Only used for debugging
 				Serial.println("Received -> " + cmdString);
 			#endif // DEBUG
 		
