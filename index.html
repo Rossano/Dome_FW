@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Dome fw by Rossano</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1>Dome fw</h1>
+          <h2>Arduino C++ Firmware code for the Dome application</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/Rossano/Dome_FW/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/Rossano/Dome_FW/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/Rossano/Dome_FW" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <section id="main_content">
+          <h1>
+<a name="telescope-dome-firmware" class="anchor" href="#telescope-dome-firmware"><span class="octicon octicon-link"></span></a>Telescope Dome Firmware</h1>
+
+<h2>
+<a name="scope" class="anchor" href="#scope"><span class="octicon octicon-link"></span></a>Scope</h2>
+
+<p>This is the firmware for the Arduino code used to automatically control the dome rotation of a telescope. Please note that the code is a C++ extension of the native Arduino language.</p>
+
+<h2>
+<a name="system-architecture" class="anchor" href="#system-architecture"><span class="octicon octicon-link"></span></a>System Architecture</h2>
+
+<p>The system works as follow:</p>
+
+<ul>
+<li>The Arduino board get rotations commands from a PC which has an C# application reading the telescope position and carrying out the need rotation for the Dome;</li>
+<li>The Arduino code is organized as a command shell: it waits commands from PC and executes the command;</li>
+<li>Arduino board controls an AC/AC converter connected to a AC electric motor that makes turning the dome is controlled in a joystick-way;</li>
+<li>To read the dome position there is an incremental encoder on the dome gear that reports the turning (under De-multiplication);</li>
+<li>Arduino boards takes care to allow all interfaces voltage adaptation.</li>
+</ul><h2>
+<a name="code-architecture" class="anchor" href="#code-architecture"><span class="octicon octicon-link"></span></a>Code Architecture</h2>
+
+<p>As mentioned above, Arduino code is made as a command shell that waits instructions from its USB port (made as CDC device) and execute them. On top of that it has an interrupt management of the encoder input and tells the angle position to the PC application.</p>
+
+<h3>
+<a name="rtos" class="anchor" href="#rtos"><span class="octicon octicon-link"></span></a>RTOS</h3>
+
+<p>The code is based on the NilRTOS Real Time Operating System, and with those threads defined:</p>
+
+<ul>
+<li>Encoder Thread: when a new pulse is read (from interrupt), incremental encoder position is converted to angle (integer so far) and it is sent to the PC via USB;</li>
+<li>Dome Thread: used only to turn the dome for a given angle/# of encoder pulses, not working so far;</li>
+<li>Encoder Simulation Thread: used for debug purposes, it generates a pulse to trigger the encoder thread without having the encoder hardware;</li>
+<li>IDLE thread: it manages the USB I/O and it runs the shell code.</li>
+</ul><h3>
+<a name="implemented-commands" class="anchor" href="#implemented-commands"><span class="octicon octicon-link"></span></a>Implemented Commands:</h3>
+
+<p>Here is a list of the implemented commands:</p>
+
+<p>Generic:</p>
+
+<ul>
+<li>info: it returns the FW version and the RTOS version;</li>
+<li>help: it returns the list of the implemented commands;</li>
+</ul><p>Dome:</p>
+
+<ul>
+<li>turn_right: it activate the AC/AC driver to turn right;</li>
+<li>turn_left: it activate the AC/AC driver to turn left;</li>
+<li>stop: it deactivate all AC/AC driver commands;</li>
+<li>pos: it returns the encoder position angle as integer/angle.</li>
+</ul><h3>
+<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+
+<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+        </section>
+
+        <footer>
+          Dome fw is maintained by <a href="https://github.com/Rossano">Rossano</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>
