@@ -27,6 +27,8 @@
 #define ENCODER_GEAR_RATIO  1.0		//	Ratio between Encoder Gear and Final Gear
 //	Max counts to make a full turn of the final gear
 #define ENCODER_MAX_COUNT	floor(ENCODER_RESOLUTION * ENCODER_GEAR_RATIO)
+//	Encoder interface: A_ONLY, A_AND_B,  FULL
+#define ENCODER_IMPLEMENTATION	A_ONLY
 #define MAX_COUNT	9				//	Max counts to make a full turn of the final gear
 #define ENCODER_SIMULATION			//	Activate the simulation of the encoder
 #define RETURN_ANGLE		0		//	0-> Activate the position return as circular buffer count

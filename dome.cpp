@@ -97,7 +97,8 @@ void TurnLeft(int argc, char *argv[])
 		avrPrintf("argv[0]-> "); avrPrintf(argv[0]);
 		//avrPrintf("\nargv[1]-> "); avrPrintf(argv[1]);
 		//avrPrintf("\nargv[2]-> "); avrPrintf(argv[2]);
-		*p = -atoi(argv[0]);
+//		*p = -atoi(argv[0]);
+		*p = -1 * atoi(argv[0]);
 		avrPrintf("Turning Left of ");
 		avrPrintf(*p);
 		avrPrintf("\n");
@@ -192,11 +193,14 @@ NIL_THREAD(DomeThread, arg)
 			//else posFinal = posInitial + *p;
 		}
 		
-		avrPrintf("Dome Final Position: ");
-		avrPrintf(posFinal);
+		//avrPrintf("Dome Final Position: ");
+		//avrPrintf(posFinal);
+		//avrPrintf(CR);
+		avrPrintf("Dome counts = ");
+		avrPrintf(foo);
 		avrPrintf(CR);
-	
-		uint16_t count = 0;
+		
+		int16_t count = 0;
 		Encoder.MultiActivate = true;
 		
 		//avrPrintf("foo = ");
@@ -210,13 +214,14 @@ NIL_THREAD(DomeThread, arg)
 				avrPrintf("Error: turnRight command\n");
 				break;
 			}
+			avrPrintf("Entering while\n");
 			while (count <= foo)
 			{
 				nilSemWait(&EncoderCountSem);
 				count++;
 				avrPrintf("Count\n");
 				// Rearm the semaphore
-				nilSemSignal(&EncoderCountSem);
+//				nilSemSignal(&EncoderCountSem);
 			}
 			Dome.stop();
 			//avrPrintf("Stop turning Right\n");			
@@ -230,14 +235,15 @@ NIL_THREAD(DomeThread, arg)
 				avrPrintf("Error: turnLeft command\n");
 				break;
 			}
-			uint8_t end = -foo;
+//			uint8_t end = -foo;
+			uint8_t end = -1 * foo;
 			while (count <= end)//-foo)
 			{
 				nilSemWait(&EncoderCountSem);
 				count++;
 				avrPrintf("Count\n");
 				//	Rearm the semahaore
-				nilSemSignal(&EncoderCountSem);
+//				nilSemSignal(&EncoderCountSem);
 			}
 			Dome.stop();
 			//avrPrintf("Error: stop command\n");						

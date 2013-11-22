@@ -121,7 +121,10 @@ void EncoderClass::init()
 	#else	
 		///	Configure IRQ on external pins
 		attachInterrupt(IRQ_PINA, encoderISR, RISING);
-		attachInterrupt(IRQ_PINB, encoderISR, RISING);
+		#if (ENCODER_IMPLEMENTATION = A_AND_B)
+		//	Configure interrupt on B port only if it is used
+			attachInterrupt(IRQ_PINB, encoderISR, RISING);
+		#endif
 		attachInterrupt(IRQ_HOME, homeISR, RISING);
 	#endif //ENCODER_SIMULATION		
 }
@@ -236,72 +239,13 @@ EncoderClass EncoderClass::operator --(int)
 	}
 }
 
-#ifdef ENCODER_SIMULATION //DEBUG
-
-NIL_WORKING_AREA(waDebugThread, 64);
-NIL_THREAD(DebugThread, arg)
-{
-	#ifdef TIMER_DEBUG
-	//Serial.println("Starting Debug Timer");
-	avrPrintf("Starting Debug Timer");
-	#endif
-	//nilTimer1Start(DEBUG_TIMER_INTERVAL_US);
-	
-	while(TRUE)
-	{
-		nilTimer1Wait();
-		nilSemSignal(&DebugSem);
-//		nilSemSignal(&EncoderCountSem);
-		#ifdef TIMER_DEBUG
-		//Serial.println("Tick!\nWaiting Free");
-		avrPrintf("Tick");
-		avrPrintf("Waiting Free");
-		#endif // TIMER_DEBUG
-		if (Encoder.MultiActivate)
-		{
-			nilSemSignal(&EncoderCountSem);
-		}
-	}
-}
-
-#else
-
-void encoderISR()
-{
-	NIL_IRQ_PROLOGUE();
-	if(digitalRead(encoderA) == digitalRead(encoderB))
-	{
-		nilSysLockFromIsr();
-		if(Encoder.Position() == MAX_COUNT) Encoder.SetPosition(0);
-		else Encoder.SetPosition(Encoder.Position() + 1);
-		nilSysUnlockFromIsr();
-	}
-	else
-	{
-		nilSysLockFromIsr();
-		if(Encoder.Position() == 0) Encoder.SetPosition(MAX_COUNT);
-		else Encoder.SetPosition(Encoder.Position() -1);
-		nilSysUnlockFromIsr();
-	}
-	nilSemSignalI(&encoderSem);
-	if (Encoder.MultiActivate)
-	{
-		nilSemSignalI(&EncoderCountSem);
-	}
-	NIL_IRQ_EPILOGUE();
-}
-
-void homeISR()
-{
-	NIL_IRQ_PROLOGUE();
-	nilSysLockFromIsr()	;
-	Encoder.SetPosition(0);
-	nilSysUnlockFromIsr();
-	NIL_IRQ_EPILOGUE();
-}
-
-#endif // not def DEBUG
-
+/// <summary>
+/// Shell Command to read the Encoder position.
+/// This command checks the passed arguments and returns on terminal the
+/// actual encoder absolute position.
+/// </summary>
+/// <param name="argc">Number of passed parameters</param>
+/// <param name="argv">List of parameter</param>
 void getPosition(int argc, char *argv[])
 {
 	(void) argv;
@@ -311,30 +255,172 @@ void getPosition(int argc, char *argv[])
 		Usage("pos");
 		return;
 	}
-	char buf[10];
+	char buf[10];										//	Buffer to store the ASCII conversion of the position
 	//        Else display a string stating that it is not implemented
-	avrPrintf("Position= ");
+	avrPrintf("Position= ");							//	Tag for the PC application
+	//
+	//	If Position has to be returned as angle carry out he value and send it to the serial port
+	//
 	#if (RETURN_ANGLE == 1)
-		double angle = 360 * ((double)Encoder.Position() / (double)Encoder.encoderMaxCount);
-		avrPrintf(angle);
-		avrPrintf("\nCounter= ");
-		avrPrintf(ltoa(Encoder.Position(), buf, 10));
+	//	Carry out the angle
+	double angle = 360 * ((double)Encoder.Position() / (double)Encoder.encoderMaxCount);
+	//	Send it to the serial port
+	avrPrintf(angle);
+	#ifdef DEBUG
+	avrPrintf("\nCounter= ");
+	avrPrintf(ltoa(Encoder.Position(), buf, 10));
+	#endif // DEBUG
 	#else
-		avrPrintf(ltoa(Encoder.Position(), buf, 10));
+	avrPrintf(ltoa(Encoder.Position(), buf, 10));	//	Send the position as circular buffer counter
 	#endif
-	avrPrintf("OK\r\n");
+	avrPrintf("OK\r\n");								//	Tag the PC application  that all is OK
 }
-#include "MemoryFree.h"
 
+#ifdef ENCODER_SIMULATION
+	/// <summary>
+	/// Function Wrap up to start the RTOS timer
+	/// </summary>
+	void startEncoderTimer()
+	{
+		nilTimer1Start(DEBUG_TIMER_INTERVAL_US);
+	}	
+
+	/// <summary>
+	/// Function Wrap up to stop the RTOS timer
+	/// </summary>
+	void stopEncoderTimer()
+	{
+		nilTimer1Stop();
+	}
+#endif // ENCODER_SIMULATION
+
+//////////////////////////////////////////////////////////////////////////
+///
+///	ISR Section
+///
+//////////////////////////////////////////////////////////////////////////
+
+#ifdef ENCODER_SIMULATION 
+
+//////////////////////////////////////////////////////////////////////////
+///	DebugThread
+///	This thread is only meant to simulating the encoder with a timer
+///	in oder to send a pulse to the code at a given laps of time
+//////////////////////////////////////////////////////////////////////////
+NIL_WORKING_AREA(waDebugThread, 64);
+NIL_THREAD(DebugThread, arg)
+{
+	#ifdef TIMER_DEBUG
+		avrPrintf("Starting Debug Timer");		//	Plot debug message if flag is active
+	#endif
+	
+	while(TRUE)
+	{
+		nilTimer1Wait();						//	Wait a new pulse from a timer
+		nilSemSignal(&DebugSem);				//	Signal the new pulse to the encoder unlocking a semaphore
+//		nilSemSignal(&EncoderCountSem);
+		#ifdef TIMER_DEBUG
+			avrPrintf("Tick");
+			avrPrintf("Waiting Free");
+		#endif // TIMER_DEBUG
+		if (Encoder.MultiActivate)				//	Unlock a semaphore used to count a given # of pulse
+		{
+			nilSemSignal(&EncoderCountSem);
+		}
+	}
+}
+
+#else
+
+//////////////////////////////////////////////////////////////////////////
+///	If Encoder is not simulated, the pulse management is done via
+///	External interrupt. 
+///	For this reason ISR are herewith defined
+//////////////////////////////////////////////////////////////////////////
+
+/// <summary>
+/// Code for the Encoder External Interrupt ISR.
+/// The code is triggered when there is an external event on the Encoder input ports
+/// It checks the status of the encoder port A, B and Home to increment the encoder
+/// absolute position.
+/// </summary>
+void encoderISR()
+{
+	NIL_IRQ_PROLOGUE();									//	Required by RTOS
+	#if (ENCODER_IMPLEMENTATION == A_ONLY)
+		//	If A=H and B=H  Dome is turning clockwise (on the RIGHT)
+		if(digitalRead(encoderA) == digitalRead(encoderB))
+		{	
+			// Increment encoder under lock block
+			nilSysLockFromIsr();
+			//if(Encoder.Position() == MAX_COUNT) Encoder.SetPosition(0);
+			//else Encoder.SetPosition(Encoder.Position() + 1);
+			Encoder++;
+			nilSysUnlockFromIsr();
+		}
+		//	A=H and B=L Dome is turning anticlockwise (on the LEFT)
+		else
+		{		
+			// Decrement encoder under lock block
+			nilSysLockFromIsr();
+			//if(Encoder.Position() == 0) Encoder.SetPosition(MAX_COUNT);
+			//else Encoder.SetPosition(Encoder.Position() -1);
+			Encoder--;
+			nilSysUnlockFromIsr();
+		}
+	#elif (ENCODER_IMPLEMENTATION == A_AND_B)
+	
+	#endif // ENCODER_IMPLEMENTATION
+	
+	nilSemSignalI(&encoderSem);							//	Release the encoder semaphore
+	if (Encoder.MultiActivate)							//	If command asked to count a #
+	{													//	of pulses release the couting semaphore
+		nilSemSignalI(&EncoderCountSem);
+	}
+	NIL_IRQ_EPILOGUE();									//	Requested by RTOS
+}
+
+/// <summary>
+/// Code for the Home Interrupt ISR.
+/// The code is triggered when there is an external event on the Home input ports
+/// It resets the increment the encoder position to 0
+/// </summary>
+void homeISR()
+{
+	NIL_IRQ_PROLOGUE();									//	Requested by RTOS
+	nilSysLockFromIsr()	;
+	Encoder.SetPosition(0);								//	Set the position to 0 under lock block
+	nilSysUnlockFromIsr();
+	NIL_IRQ_EPILOGUE();									//	Requested by RTOS
+}
+
+#endif // not def DEBUG
+
+//////////////////////////////////////////////////////////////////////////
+///
+///	Thread Section
+///
+//////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////
+///	Encoder Thread
+///	Encoder Thread awaits locked on a semaphore that a new event (external pin/timer)
+///	happens and send the new position to the PC application
+//////////////////////////////////////////////////////////////////////////
 NIL_WORKING_AREA(waEncoderThread, STACKSIZE);
 NIL_THREAD(EncoderThread, arg)
 {
 	while (TRUE)
 	{
+		//	If Encoder is simulated
 		#ifdef ENCODER_SIMULATION 
-			nilSemWait(&DebugSem);
+			nilSemWait(&DebugSem);				//	Await a new event on the Debug semaphore
 			nilSysLock();
-			avrPrintf("Tick\n");
+			avrPrintf("Tick\n");				//	Send a tag to the PC application
+			//
+			//	In simulated conditions, the Dome turning state information are store by the Dome data structure
+			//	Therefore it used to increment/decrement the Encoder position
+			//
 			if(Dome.getState() == TURN_RIGHT)
 			{
 				//if(Encoder.Position() == MAX_COUNT-1) Encoder.SetPosition(0);
@@ -349,18 +435,21 @@ NIL_THREAD(EncoderThread, arg)
 			}
 			nilSysUnlock();
 		#else
-			nilSemWait(&encoderSem);
-		#endif	//	ENCODER_SIMULATION
-		//Serial.print("ARD> Position -> ");
-		//Serial.println(Encoder.Position());
+		//	Encoder HW is available
+			nilSemWait(&encoderSem);			//	Encoder position is consumed elsewhere so here
+												//	just awaits the encoder pulse to send the new position
+		#endif	//	ENCODER_SIMULATION		
 		char buf[10];
-		avrPrintf("Position= ");
+		avrPrintf("Position= ");				//	Tag for the PC application
+		//	If the position has to be reported as angle
 		#if (RETURN_ANGLE == 1)
+			//	Carry out the angle
 			double angle = (360 * (double)Encoder.Position()) / 16.0;//(double)ENCODER_RESOLUTION; //Encoder.encoderMaxCount);
-			avrPrintf(angle);			
+			avrPrintf(angle);					//	Send the angle to the serial port		
 			avrPrintf(CR);
 		#else
-			avrPrintf(ltoa(Encoder.Position(), buf, 10));
+		//	Position is sent as circular buffer counter
+			avrPrintf(ltoa(Encoder.Position(), buf, 10));	//	Send the angle position counter on serial port
 		#endif
 		#ifdef MEMORY_CHECK
 				avrPrintf("freeMemory() = ");		
@@ -368,14 +457,4 @@ NIL_THREAD(EncoderThread, arg)
 				avrPrintf(CR);
 		#endif // MEMORY_CHECK
 	}
-}
-
-void startEncoderTimer()
-{
-	nilTimer1Start(DEBUG_TIMER_INTERVAL_US);
-}
-
-void stopEncoderTimer()
-{
-	nilTimer1Stop();
 }
