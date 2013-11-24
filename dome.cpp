@@ -2,22 +2,48 @@
 // 
 // 
 
-#include <NilRTOS.h>
-#include <NilFIFO.h>
+//////////////////////////////////////////////////////////////////////////
+///
+///	Include Section
+///
+//////////////////////////////////////////////////////////////////////////
 
-#include "board.h"
-#include "dome.h"
-#include "encoder.h"
-#include "shell.h"
+#include <NilRTOS.h>						//	NilRTOS module
+#include <NilFIFO.h>						//	RTOS FIFO module
 
-//extern EncoderClass Encoder;
+#include "board.h"							//	Dome board definitions inclusion
+#include "dome.h"							//	Dome module inclusion
+#include "encoder.h"						//	Encoder module inclusion
+#include "shell.h"							//	Shell module inclusion
 
+//////////////////////////////////////////////////////////////////////////
+///
+///	Variable Section
+///
+//////////////////////////////////////////////////////////////////////////
+
+NilFIFO<int16_t, 2> turnfifo;				//	FIFO to unlock the Dome thread to turn a fix number of step
+DomeClass Dome;								//	Dome data structure to control the motors
+extern SEMAPHORE_DECL(EncoderCountSem, 0);	//	Semaphore to synchronize Dome thread on encoder pulses
+
+//////////////////////////////////////////////////////////////////////////
+///
+///	Code Section
+///
+//////////////////////////////////////////////////////////////////////////
+
+///<summary>
+/// Default constructor. It initialize the DomeCLass data structure
+///</summary>
 DomeClass::DomeClass()
 {
-	state = NO_TURN; //DomeState::NO_TURN;
+	state = NO_TURN;					//	Set as STOPPED
 	init();
 }
 
+///<summary>
+/// Dome HW configuration. It sets up the Arduino I/O for the motor control
+///</summary>
 void DomeClass::init()
 {
 	pinMode(turnLeftPin, OUTPUT);
@@ -26,60 +52,91 @@ void DomeClass::init()
 	digitalWrite(turnRightPin, LOW);
 }
 
+///<summary>
+/// Returns the Dome state
+///</summary>
+///<return name='DomeStateType'>The Dome rotating state.</return>
 DomeStateType DomeClass::getState()
 {
 	return state;
 }
 
+///<summary>
+/// Turn the Dome left. This method drive the motor to turn anticlockwise.
+///</summary>
+///<return name='bool'>TRUE if operation successful, FALSE otherwise.</return>
 bool DomeClass::turnLeft()
 {
+	//	Start turning only if motor is stopped, else command is dropped
 	if(state == NO_TURN) 
 	{
-		state = TURN_LEFT;
+		state = TURN_LEFT;								//	Change state to turning to the left		
 		#ifndef ENCODER_SIMULATION
-			digitalWrite(turnLeftPin, HIGH);
+			digitalWrite(turnLeftPin, HIGH);			//	Activate motor only if real HW is present
 		#else
-			avrPrintf("Start Turning LEFT\n");
-			startEncoderTimer();
-		#endif
-		avrPrintf("Exiting turning left function\n");
-		return true;
-	}
-	return false;
-}
-
-bool DomeClass::turnRight()
-{
-	if(state == NO_TURN)
-	{
-		state = TURN_RIGHT;
-		#ifndef ENCODER_SIMULATION
-			digitalWrite(turnRightPin, HIGH);
-		#else
-			startEncoderTimer();
+			avrPrintf("Start Turning LEFT\n");			//	If encoder is simulated tag a message to the serial port
+			startEncoderTimer();						//	Start the timer to simulate the Encoder
 		#endif
 		
-		return true;
+		#ifdef DEBUG
+			avrPrintf("Exiting turning left function\n");
+		#endif // DEBUG
+		return true;									//	Everything was fine thus return TRUE
 	}
-	return false;
+	return false;										//	Else retun FALSE
+}
+///<summary>
+/// Turn the Dome right. This method drive the motor to turn clockwise.
+///</summary>
+///<return name='bool'>TRUE if operation successful, FALSE otherwise.</return>
+bool DomeClass::turnRight()
+{
+	//	Start turning only if motor is stopped, else the command is dropped
+	if(state == NO_TURN)
+	{
+		state = TURN_RIGHT;								//	Change state to turning on the right
+		#ifndef ENCODER_SIMULATION
+			digitalWrite(turnRightPin, HIGH);			//	Activate motor only if real HW is present
+		#else
+			avrPrintf("Start turning RIGHT\n");			//	If encoder is simulated tag a message to the serial port
+			startEncoderTimer();						//	Start the timer to simulate the Encoder
+		#endif
+		
+		#ifdef DEBUG
+			avrPrintf("Exiting turning right function\n");
+		#endif // DEBUG
+		return true;									//	Everything is fine thus return TRUE
+	}
+	return false;										//	Else return FALSE
 }
 
+///<summary>
+/// Method to stop turning the Dome.
+///</summary>
 void DomeClass::stop()
 {
+	//	If encoder is not simulated check on which direction the Dome is turning to deactivate
+	//	the right Arduino I/O
 	#ifndef ENCODER_SIMULATION
 		if(state == TURN_LEFT) digitalWrite(turnLeftPin, LOW);
 		else if (state == TURN_RIGHT) digitalWrite(turnRightPin, LOW);
 	#else
-		stopEncoderTimer();
+		stopEncoderTimer();								//	Encoder simulated, simply stop the timer
 	#endif
 	
-	state = NO_TURN;
+	state = NO_TURN;									//	Set state to no turning
 }
 
+/// <summary>
+/// Shell Command to turn the Dome left.
+/// Activate the motor to turn anticlockwise the Dome.
+/// </summary>
+/// <param name="argc">Number of parameters.</param>
+/// <param name="argv">A pointer to the Argument list.</param>
 void TurnLeft(int argc, char *argv[])
 {
 	(void) argv;
-	//        If there are arguments display and error message
+	//        If there are more than 2 arguments display and error message
 	if(argc > 1)
 	{
 		Usage("turn_left <opt. # of steps>");
@@ -87,53 +144,67 @@ void TurnLeft(int argc, char *argv[])
 	}
 	//        Else  Turning Left
 	if(argc == 0)
-	{
-		Dome.turnLeft();
-		avrPrintf("OK\r\n");
+	{	//	If there are no arguments simply turn left indefinitely
+		Dome.turnLeft();									//	Activate the ComeClass method
+//		avrPrintf("OK\r\n");								//	Tag an OK to the serial port
 	}
 	else
-	{
-		int16_t *p = turnfifo.waitFree(TIME_INFINITE);	
-		avrPrintf("argv[0]-> "); avrPrintf(argv[0]);
-		//avrPrintf("\nargv[1]-> "); avrPrintf(argv[1]);
-		//avrPrintf("\nargv[2]-> "); avrPrintf(argv[2]);
-//		*p = -atoi(argv[0]);
-		*p = -1 * atoi(argv[0]);
-		avrPrintf("Turning Left of ");
-		avrPrintf(*p);
-		avrPrintf("\n");
-		turnfifo.signalData();
+	{	//	If there is an argument pass the number of steps to the FIFO
+		int16_t *p = turnfifo.waitFree(TIME_INFINITE);		//	Wait a free slot on the FIFO
+		#ifdef DEBUG
+			avrPrintf("Turning Left of ");
+			avrPrintf(*p);
+			avrPrintf("\n");
+			avrPrintf("argv[0]-> "); avrPrintf(argv[0]);
+	//		*p = -atoi(argv[0]);		
+		#endif // DEBUG		
+		*p = -1 * atoi(argv[0]);							//	Update the FIFO slot with the # of steps to turn (<0 -> left)
+		turnfifo.signalData();								//	Signal that there is a new data into the FIFO
 	}
-	avrPrintf("OK\r\n");
+	avrPrintf("OK\r\n");									//	Tag successful operation to the serial port
 }
 
+/// <summary>
+/// Shell Command to turn the Dome right.
+/// Activate the motor to turn clockwise the Dome.
+/// </summary>
+/// <param name="argc">Number of parameters.</param>
+/// <param name="argv">A pointer to the Argument list.</param>
 void TurnRight(int argc, char *argv[])
 {
 	(void) argv;
-	//        If there are arguments display and error message
+	//        If there are more than 2 arguments display and error message
 	if(argc > 1)
 	{
-		Usage("turn_left <opt. # of steps>");
+		Usage("turn_right <opt. # of steps>");
 		return;
 	}
-	//        Else  Turning Left
+	//        Else  Turning Right
 	if(argc == 0)
-	{
-		Dome.turnRight();
-		avrPrintf("OK\r\n");
+	{	//	if there are no arguments simply turn right indefinitely
+		Dome.turnRight();									//	Activate the Dome Method to turn right
+//		avrPrintf("OK\r\n");								
 	}
 	else
-	{
-		int16_t *p = turnfifo.waitFree(TIME_INFINITE);
-		*p = atoi(argv[0]);
-		avrPrintf("Turning Right of ");
-		avrPrintf(*p);
-		avrPrintf("\n");
-		turnfifo.signalData();
+	{	//	If there is an argument pass the number of steps to the FIFO
+		int16_t *p = turnfifo.waitFree(TIME_INFINITE);		//	Wait a free slot in the FIFO
+		*p = atoi(argv[0]);									//	Update the FIFO slot with the # of steps
+		#ifdef DEBUG
+			avrPrintf("Turning Right of ");
+			avrPrintf(*p);
+			avrPrintf("\n");
+		#endif
+		turnfifo.signalData();								//	Signal that there is a new data into the FIFO
 	}
-	avrPrintf("OK\r\n");
+	avrPrintf("OK\r\n");									//	Tag successful operation to the serial port
 }
 
+/// <summary>
+/// Shell Command to stop turning the Dome.
+/// Deactivate the motor that is actually turning the Dome.
+/// </summary>
+/// <param name="argc">Number of parameters.</param>
+/// <param name="argv">A pointer to the Argument list.</param>
 void Stop(int argc, char *argv[])
 {
 	(void) argv;
@@ -144,32 +215,50 @@ void Stop(int argc, char *argv[])
 		return;
 	}
 	//        Else stop the Turning Dome
-	Dome.stop();
-	avrPrintf("OK\r\n");
+	Dome.stop();											//	Activate the method to stop turning
+	avrPrintf("OK\r\n");									//	Tag the successful operation on the serial port
 }
 
-NilFIFO<int16_t, 2> turnfifo;
-DomeClass Dome;
-extern SEMAPHORE_DECL(EncoderCountSem, 0);
+/// Wrap up  command to return the Dome state.
+/// Dummy wrap up to access and simplify access to the Dome state information.
+/// </summary>
+/// <return name="DomeStateType">Dome Turning State.</return>
+DomeStateType getDomeState()
+{
+	return Dome.getState();
+}
 
+//////////////////////////////////////////////////////////////////////////
+///
+///	Thread Section
+///
+//////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////
+///	Dome Thread
+///	Thread to synchronize the Thread turning on a given number of 
+///	steps. The thread is locked on the FIFO awaiting the number 
+///	of steps to turn.
+//////////////////////////////////////////////////////////////////////////
 NIL_WORKING_AREA(waDomeThread, STACKSIZE);
 NIL_THREAD(DomeThread, arg)
 {
 	while(TRUE)
 	{
-		int16_t *p = turnfifo.waitData(TIME_INFINITE);
-		
-		avrPrintf("Using Dome Thread\nReceived data is: ");
-		avrPrintf(*p);
-		avrPrintf(CR);
-		//unsigned long posInitial = Encoder.Position();
-		//unsigned long posFinal
-		uint32_t posInitial = Encoder.Position();
-		uint32_t posFinal;
-		avrPrintf("Dome Initial Position: ");
-		avrPrintf(posInitial);
-		avrPrintf(CR);
-		int16_t foo = *p;
+		int16_t *p = turnfifo.waitData(TIME_INFINITE);			//	Lock the thread until the # of steps to tuen is received
+		#if 1 //(defined DEBUG)
+			avrPrintf("Using Dome Thread\nReceived data is: ");
+			avrPrintf(*p);
+			avrPrintf(CR);
+		#endif
+		uint32_t posInitial = Encoder.Position();				//	Get Encoder initial position
+		uint32_t posFinal;										//	Encoder final position
+		#ifdef DEBUG
+			avrPrintf("Dome Initial Position: ");
+			avrPrintf(posInitial);
+			avrPrintf(CR);
+		#endif // DEBUG		
+		int16_t foo = *p;										//	dummy variable
 		
 		if (foo < 0)
 		//if(*p > 0)
@@ -193,68 +282,71 @@ NIL_THREAD(DomeThread, arg)
 			//else posFinal = posInitial + *p;
 		}
 		
-		//avrPrintf("Dome Final Position: ");
-		//avrPrintf(posFinal);
-		//avrPrintf(CR);
 		avrPrintf("Dome counts = ");
 		avrPrintf(foo);
 		avrPrintf(CR);
 		
-		int16_t count = 0;
-		Encoder.MultiActivate = true;
+		int16_t count = 0;										//	Steps to count
+		Encoder.MultiActivate = true;							//	Activate a flag to activate semaphore
 		
-		//avrPrintf("foo = ");
-		//avrPrintf(foo);
-		//avrPrintf(CR);
 		if (foo > 0)
-		{
+		{	
+			//
+			//	Turning Right
+			//
 			avrPrintf("Start turning Right\n");
-			if (!Dome.turnRight())
+			if (!Dome.turnRight())								//	Start turning right
 			{
 				avrPrintf("Error: turnRight command\n");
 				break;
 			}
 			avrPrintf("Entering while\n");
-			while (count <= foo)
-			{
-				nilSemWait(&EncoderCountSem);
-				count++;
-				avrPrintf("Count\n");
+			avrPrintf("foo -> ");
+			avrPrintf(foo);
+			avrPrintf(CR);
+			//	Cycle to count the given # of steps
+			//while (count <= foo)
+			for (int i=0; i<foo; i++)
+			{	avrPrintf("Count");
+				nilSemWait(&EncoderCountSem);					//	Lock thread until encoder pulse
+				count++;										//	increase the counter
+				avrPrintf("Count\n");							//	Tag a message to the serial port
 				// Rearm the semaphore
 //				nilSemSignal(&EncoderCountSem);
 			}
-			Dome.stop();
-			//avrPrintf("Stop turning Right\n");			
+			Dome.stop();										//	Once counted the given # of steps stop turning			
 			avrPrintf("Stop turning Right\nOK\n");
 		}
 		else if (foo < 0)
 		{
+			//
+			//	Turning Left
+			//
 			avrPrintf("Start turning Left\n");
-			if (!Dome.turnLeft())
+			if (!Dome.turnLeft())								//	Start turning left
 			{
 				avrPrintf("Error: turnLeft command\n");
 				break;
 			}
-//			uint8_t end = -foo;
-			uint8_t end = -1 * foo;
+			uint8_t end = -1 * foo;								//	Define counter limit (positive)
+			//	Cycle to count the given # of steps
 			while (count <= end)//-foo)
 			{
-				nilSemWait(&EncoderCountSem);
-				count++;
-				avrPrintf("Count\n");
+				nilSemWait(&EncoderCountSem);					//	Lock thread until encoder pulse
+				count++;										//	increase the counter
+				avrPrintf("Count\n");							//	Tag a message to the serial port
 				//	Rearm the semahaore
 //				nilSemSignal(&EncoderCountSem);
 			}
-			Dome.stop();
-			//avrPrintf("Error: stop command\n");						
+			Dome.stop();										//	Once counted the given # of steps stop turning			
 			avrPrintf("Stop Turning Left\nOK\n");
 		}
 		else if (foo == 0)
 		{
 			// Do nothing
 		}
-		avrPrintf("Stop turning\nOK\n");
-		Encoder.MultiActivate = false;
+		avrPrintf("Stop turning\nOK\n");						//	Tag successful operation to the serial port
+		Encoder.MultiActivate = false;							//	Deactivate the flag for thread semaphore
 			
 	#if 0
 		if (foo < 0)
@@ -285,12 +377,7 @@ NIL_THREAD(DomeThread, arg)
 			avrPrintf("Stop OK\n");
 		}
 	#endif
-		turnfifo.signalFree();
-		avrPrintf("OK\r\n");
+		turnfifo.signalFree();									//	Tell FIFO that a slot is free
+		//avrPrintf("OK\r\n");									
 	}
-}
-
-DomeStateType getDomeState()
-{
-//	return Dome.state;
 }

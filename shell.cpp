@@ -308,7 +308,6 @@ void CmdSystime(int argc, char *argv[])
 /// </summary>
 /// <param name="argc">Number of parameters.</param>
 /// <param name="argv">A pointer to the Argument list.</param>
-
 void CmdInfo(int argc, char *argv[])
 {
 	(void)argv;

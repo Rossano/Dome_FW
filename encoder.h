@@ -31,7 +31,7 @@
 #define ENCODER_IMPLEMENTATION	A_ONLY
 #define MAX_COUNT	9				//	Max counts to make a full turn of the final gear
 #define ENCODER_SIMULATION			//	Activate the simulation of the encoder
-#define RETURN_ANGLE		0		//	0-> Activate the position return as circular buffer count
+#define RETURN_ANGLE		1		//	0-> Activate the position return as circular buffer count
 									//	1-> Activate the position return as angle
 
 //////////////////////////////////////////////////////////////////////////
