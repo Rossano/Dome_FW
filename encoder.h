@@ -1,4 +1,9 @@
-//////////////////////////////////////////////////////////////////////////
+/**
+ *  \file encoder.h
+ *  \brief Arduino Encoder header file
+ *  This file implements the interface of an Arduino control of an incremental encoder
+ */
+ //////////////////////////////////////////////////////////////////////////
 ///
 ///		encoder.h
 ///
@@ -18,7 +23,18 @@
 ///	Defines Section
 ///
 //////////////////////////////////////////////////////////////////////////
-
+/// \brief Constant Definition
+/// \param STACKSIZE size of the thread stack
+/// \param ENCODER_RESOLUTION default encoder resolution 
+/// \param ENCODER_GEAR_RATIO gear ratio of the the dome/encoder mechanical system
+/// \param ENCODER_MAX_COUNT Number of encoder pulses to make a full turn of the dome (
+/// (loor(ENCODER_RESOLUTION * ENCODER_GEAR_RATIO)
+/// \param ENCODER_IMPLEMENTATION Incremental encoder coded interface, possible choices:
+///	A_ONLY: only a single pulse is managed
+///	A_AND_B: 2 quadrature signals are managed
+///	FULL: 2 quadrature plus Z signals are managed
+/// \param ENCODER_SIMULATION compile flag to activate the software simulation of the encoder (debug)
+/// \param RETURN_ANGLE compile flag to set to provide the return position as angle (1) or as counter (0)
 #define STACKSIZE	64				//	Thread stacksize
 ///
 ///		Default definitions for the Encoder Configuration

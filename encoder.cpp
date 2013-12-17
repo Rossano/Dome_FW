@@ -1,6 +1,8 @@
-// 
-//	Encoder.cpp 
-// 
+/**
+ *  \file encoder.h
+ *  \brief Arduino Encoder code
+ *  This file implements the interface of an Arduino control of an incremental encoder
+ */
 
 //////////////////////////////////////////////////////////////////////////
 ///
@@ -44,6 +46,9 @@
 ///
 //////////////////////////////////////////////////////////////////////////
 
+/// \brief Encoder class object
+/// This variable is the entry point for all the incremental encoder management
+///
 EncoderClass Encoder;						//	Encoder data structure
 
 //
@@ -59,6 +64,11 @@ EncoderClass Encoder;						//	Encoder data structure
 	SEMAPHORE_DECL(encoderSem, 0);			//	Semaphore indicating Encoder thread of a new pulse
 #endif // ENCODER_SIMULATION
 
+/// \brief Semaphore used to synchronized the counting of slewing steps
+///
+/// \param EncoderCountSem semaphore name
+/// \param 0 semaphore initial count (free)
+///
 static SEMAPHORE_DECL(EncoderCountSem, 0);	//	Semaphore used when counting fixed # of steps
 
 //////////////////////////////////////////////////////////////////////////
@@ -69,28 +79,28 @@ static SEMAPHORE_DECL(EncoderCountSem, 0);	//	Semaphore used when counting fixed
 
 extern void avrPrintf(const char * str);	//	function to print to terminal a string
 
-///<summary>
-///	Default Constructor
-///</summary>
+/// \brief Default Constructor
+///
 EncoderClass::EncoderClass()
 {
 	_position = 0;
 	init();
 }
 
-/// <summary>
-/// Constructor Initializing the Encoder position.
-/// </summary>
-/// <param name="pos">Initial position of the encoder</param>
+/// \brief Constructor Initializing the Encoder position.
+///
+/// \param pos uint32_t Initial position of the encoder
+///
 EncoderClass::EncoderClass(uint32_t pos)
 {
 	_position = pos;
 	init();		
 }
 
-/// <summary>
-/// Initialize the Encoder HW and EncoderClass data structure.
-/// </summary>
+/// \brief Initialize the Encoder HW and EncoderClass data structure.
+///
+/// \return void
+///
 void EncoderClass::init()
 {	
 	MultiActivate = false;							//	No fix # of step by default
@@ -129,19 +139,21 @@ void EncoderClass::init()
 	#endif //ENCODER_SIMULATION		
 }
 
-/// <summary>
-/// Method to read the Encoder position.
-/// </summary>
-/// <return name="uint32_t">Encoder actual absolute position.</return>
+/// \brief Method to read the Encoder position
+///
+/// \return uint32_t Encoder actual absolute position
+///
+///
 uint32_t EncoderClass::Position()
 {
 	return _position;
 }
 
-/// <summary>
-/// Method to Set the Encoder position.
-/// </summary>
-/// <param name="pos">New position of the encoder</param>
+/// \brief Method to Set the Encoder position
+///
+/// \param pos uint32_t New position of the encoder
+/// \return void
+///
 void EncoderClass::SetPosition(uint32_t pos)
 {
 	//	Since it is a critical parameter better to updated under a lock block
@@ -150,28 +162,28 @@ void EncoderClass::SetPosition(uint32_t pos)
 	nilSysUnlock();
 }
 
-/// <summary>
-/// Method to read the Encoder A signal state.
-/// </summary>
-/// <return name="bool">Encoder A channel state.</return>
+/// \brief Method to read the Encoder A signal state
+///
+/// \return bool Encoder A channel state
+///
 bool EncoderClass::channelA()
 {
 	return digitalRead(encoderA);
 }
 
-/// <summary>
-/// Method to read the Encoder B signal state.
-/// </summary>
-/// <return name="bool">Encoder B channel state.</return>
+/// \brief Method to read the Encoder B signal state
+///
+/// \return bool Encoder B channel state
+///
 bool EncoderClass::channelB()
 {
 	return digitalRead(encoderB);
 }
 
-/// <summary>
-/// Method to read the HOME signal state.
-/// </summary>
-/// <return name="bool">HOME signal state.</return>
+/// \brief Method to read the HOME signal state
+///
+/// \return bool HOME signal state
+///
 bool EncoderClass::channelHome()
 {
 	return digitalRead(encoderHome);
@@ -181,19 +193,20 @@ bool EncoderClass::channelHome()
 //	Definition of operators ++ & -- to change the Encoder position in a more elegant way
 //
 
-/// <summary>
-/// Operator ++.
-/// </summary>
-/// <return name="EncoderClass&">New EncoderClass data structure.</return>
+/// \brief Operator ++
+///
+/// \return EncoderClass& EncoderClass::operator New EncoderClass data structure
+///
 EncoderClass& EncoderClass::operator ++()
 {
 	return *this;
 }
 
-/// <summary>
-/// Operator ++..
-/// </summary>
-/// <return name="EncoderClass">EncoderClass incremented.</return>
+/// \brief Operator ++
+///
+/// \param int
+/// \return EncoderClass EncoderClass::operator EncoderClass incremented
+///
 EncoderClass EncoderClass::operator ++(int)
 {
 	if(_position == encoderMaxCount)
@@ -210,19 +223,20 @@ EncoderClass EncoderClass::operator ++(int)
 	}
 }
 
-/// <summary>
-/// Operator --.
-/// </summary>
-/// <return name="EncoderClass&">New EncoderClass data structure.</return>
+/// \brief Operator --
+///
+/// \return EncoderClass& EncoderClass::operator New EncoderClass data structure
+///
 EncoderClass& EncoderClass::operator --()
 {
 	return *this;
 }
 
-/// <summary>
-/// Operator --..
-/// </summary>
-/// <return name="EncoderClass">EncoderClass decremented.</return>
+/// \brief Operator --
+///
+/// \param int
+/// \return EncoderClass EncoderClass::operator EncoderClass decremented
+///
 EncoderClass EncoderClass::operator --(int)
 {
 	if(_position == 0)
@@ -239,13 +253,14 @@ EncoderClass EncoderClass::operator --(int)
 	}
 }
 
-/// <summary>
-/// Shell Command to read the Encoder position.
+/// \brief Shell Command to read the Encoder position.
 /// This command checks the passed arguments and returns on terminal the
 /// actual encoder absolute position.
-/// </summary>
-/// <param name="argc">Number of passed parameters</param>
-/// <param name="argv">List of parameter</param>
+///
+/// \param argc intNumber of arguments
+/// \param argv[] char* List of arguments
+/// \return void
+///
 void getPosition(int argc, char *argv[])
 {
 	(void) argv;
@@ -277,21 +292,31 @@ void getPosition(int argc, char *argv[])
 }
 
 #ifdef ENCODER_SIMULATION
-	/// <summary>
-	/// Function Wrap up to start the RTOS timer
-	/// </summary>
+	
+	/**
+	 *  \brief Function Wrap up to start the RTOS timer
+	 *  
+	 *  \return void
+	 *  
+	 *  \details Function Wrap up to easily start the NilRTOS timer.
+	 */
 	void startEncoderTimer()
 	{
 		nilTimer1Start(DEBUG_TIMER_INTERVAL_US);
 	}	
 
-	/// <summary>
-	/// Function Wrap up to stop the RTOS timer
-	/// </summary>
+	/**
+	 *  \brief Function Wrap up to stop the RTOS timer
+	 *  
+	 *  \return void
+	 *  
+	 *  \details Function wrap-up to easily stop the NilRTOS timer
+	 */
 	void stopEncoderTimer()
 	{
 		nilTimer1Stop();
 	}
+	
 #endif // ENCODER_SIMULATION
 
 //////////////////////////////////////////////////////////////////////////
@@ -308,7 +333,18 @@ void getPosition(int argc, char *argv[])
 ///	in oder to send a pulse to the code at a given laps of time
 //////////////////////////////////////////////////////////////////////////
 NIL_WORKING_AREA(waDebugThread, 64);
-NIL_THREAD(DebugThread, arg)
+
+/**
+ *  \brief Encoder Debug Thread
+ *  
+ *  \param [in] DebugThread thread code function
+ *  \param [in] arg thread code function arguments
+ *  \return void
+ *  
+ *  \details Thread use to simulate the Encoder behaviour during debug. This thread periodically unlocks the semaphore to simulate a 
+ *  pulse from an encoder. It is meant for debug only, to avoid to have an incremental encoder up and running 
+ */
+ NIL_THREAD(DebugThread, arg)
 {
 	#ifdef TIMER_DEBUG
 		avrPrintf("Starting Debug Timer");		//	Plot debug message if flag is active
@@ -338,12 +374,13 @@ NIL_THREAD(DebugThread, arg)
 ///	For this reason ISR are herewith defined
 //////////////////////////////////////////////////////////////////////////
 
-/// <summary>
+/// \brief
 /// Code for the Encoder External Interrupt ISR.
 /// The code is triggered when there is an external event on the Encoder input ports
 /// It checks the status of the encoder port A, B and Home to increment the encoder
 /// absolute position.
-/// </summary>
+/// \return void
+///
 void encoderISR()
 {
 	NIL_IRQ_PROLOGUE();									//	Required by RTOS
@@ -380,11 +417,12 @@ void encoderISR()
 	NIL_IRQ_EPILOGUE();									//	Requested by RTOS
 }
 
-/// <summary>
+/// \brief
 /// Code for the Home Interrupt ISR.
 /// The code is triggered when there is an external event on the Home input ports
 /// It resets the increment the encoder position to 0
-/// </summary>
+/// \return void
+///
 void homeISR()
 {
 	NIL_IRQ_PROLOGUE();									//	Requested by RTOS
@@ -408,6 +446,17 @@ void homeISR()
 ///	happens and send the new position to the PC application
 //////////////////////////////////////////////////////////////////////////
 NIL_WORKING_AREA(waEncoderThread, STACKSIZE);
+/**
+ *  \brief Encoder Thread
+ *  
+ *  \param [in] EncoderThread Encoder Thread code function 
+ *  \param [in] arg Encoder Thread function arguments
+ *  \return void
+ *  
+ *  \details This threads awaits that a pulse from the incremental encoder is caught locking on a semaphore.
+ *  When the pulse is caught, the semaphore unlocks and the new position is carried out and sent over the
+ *  serial port
+ */
 NIL_THREAD(EncoderThread, arg)
 {
 	while (TRUE)

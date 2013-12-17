@@ -1,18 +1,14 @@
-// 
-// 
-// 
+/**
+ *  \file shell.cpp
+ *  \brief Arduino Shell Code.
+ *  This shell reads data from serial port and execute the commands received using the client-server paradigm
+ */
 
-//#include "shell.h"
-
-//void shell::init()
-//{
-//
-//
-//}
-
-
-//shell SHELL;
-
+//////////////////////////////////////////////////////////////////////////
+///
+///	Include Section
+///
+//////////////////////////////////////////////////////////////////////////
 
 #include <string.h>
 #include <stdio.h>
@@ -24,19 +20,43 @@
 
 //        Shell own inclusion header
 #include "shell.h"
+//////////////////////////////////////////////////////////////////////////
+///
+///	Defines Section
+///
+//////////////////////////////////////////////////////////////////////////
 
-//
-//	Shell Variable Section
-//
+//////////////////////////////////////////////////////////////////////////
+///
+///	Variable Section
+///
+//////////////////////////////////////////////////////////////////////////
+
+/// \brief Line Command string buffer
+///
+/// \return Input string from USB
+///
+///
 String cmdString = "";							//        Line Command string buffer
+/// \brief Flag indicating that a command is ready
+///
+/// \return false command not ready yet, true command is ready to be consumed
+///
+///
 boolean cmdReady = false;						//        Flag indicating that a command is ready
+/// \brief Input buffer char counter
+///
+///
 uint8_t inBufCount = 0;							//        Input buffer char counter
 //        ???
 static boolean bEnd = false;
 
-//
-//        Shell Local command definition data structure
-//
+/// \brief  Shell Local command definition data structure
+///
+/// \param  info: command to send firmware information
+/// \param  systime: system time (not yet implemented)
+///
+///
 static ShellCommand_t LocalCommands[] =
 {
 	{
@@ -50,13 +70,25 @@ static ShellCommand_t LocalCommands[] =
 	}
 };
 
+/// \brief  Semaphore to synchronize access to serial port
+///
+///
 SEMAPHORE_DECL(SerialOutSem, 1);
 
-/// <summary>
-/// Shells  task code.
-/// </summary>
-/// <param name="p">Pointer to a data structure storing all implemented commands</param>
-/// <param name="line">The commanbd line.</param>
+//////////////////////////////////////////////////////////////////////////
+///
+///	Code Section
+///
+//////////////////////////////////////////////////////////////////////////
+
+/// \brief Shells  task code.
+/// This function parses the input string, getting the single tokens and launching the
+/// corresponding actions.
+/// \param p void* : Pointer to a data structure storing all implemented commands
+/// \param line char* : The command line
+/// \return void
+///
+///
 void ShellTask(void *p, char *line)
 {
 	int n;
@@ -117,8 +149,7 @@ void ShellTask(void *p, char *line)
 	avrPrintf("n -> ");
 	avrPrintf(numArgv);
 	avrPrintf(CR);
-	#endif // DEBUG
-	
+	#endif // DEBUG	
 	//
 	//        If there is a valid command to execute (not NULL),parse it and execute the corresponding action
 	//
@@ -162,113 +193,15 @@ void ShellTask(void *p, char *line)
 	}
 }
 
-#ifdef USE_SHELL_THREAD
-
-NIL_WORKING_AREA(waShellThread, STACKSIZE);
-
-/// <summary>
-/// Shell thread loop.
-/// this function read from stdin and calls the real thread code
-/// </summary>
-/// <param name="p">A pointer to the implemented commands.</param>
-NIL_THREAD(ShellThread, arg)
-//void vShellThread(void *p)
-{
-	//char line[SHELL_MAX_LINE_LENGTH];
-	// chRegSetThreadName("shell");
-	
-	//        Reserve space for the command line string buffer
-	cmdString.reserve(CMD_STRING_LEN);
-	avrPrintf("\r\nAVR Shell;\r\n");
-	
-	while(TRUE)
-	{
-		char ch;
-		
-		//        Execute the USB-CDC task
-		CDC_Task();
-		//
-		//        If the '\n' is received the flag cmdReady is set and the input string is consumed by the Shell
-		//
-		if (cmdReady)
-		{
-			#ifdef DEBUG
-			//Serial.println("Received -> " + cmdString);
-			avrPrintf("Received -> ");
-			//avrPrintf(cmdString.toCharArray());
-			#endif // DEBUG
-			
-			char buffer[CMD_STRING_LEN];
-			//        Create the char buffer pointer for the shell
-			char *buf = (char *)&buffer;
-			cmdString.toCharArray(buf, CMD_STRING_LEN);
-			#ifdef DEBUG
-			avrPrintf(buf);
-			avrPrintf("Buf Len: ");
-			//avrPrintf((const int)cmdString.length());
-			avrPrintf(inBufCount);
-			#endif // DEBUG
-			//        Execute the Shell task with the data coming for the PC
-			ShellTask((void *)ShellCommands, buf);
-			//        Print the prompt
-			//Serial.print(PROMPT);
-			avrPrintf(PROMPT);
-			//        Reinitialize the input buffer and the flag
-			cmdString = "";
-			cmdReady = false;
-			inBufCount = 0;
-		}
-	}
-	//while (!bEnd)
-	//{
-		//// Display the prompt
-		//avrPrintf(SHELL_PROMPT);
-		//// Get the command line from stdin
-		//gets(line);
-		//// Calls the shell task
-		//ShellTask((void *)ShellCommands, line);
-	//}
-	//return;
-}
-
-#endif // USE_SHELL_THREAD
-//
-//        USB-CDC Task
-//
-void CDC_Task()
-{
-	char ch;
-	//
-	//        Until data are available from the Serial Port read the data and store it into the input buffer cmdString
-	//        Process ends if '\n' is received or the MAX input string length is reached
-	//
-	while(Serial.available())
-	{
-		//        If '\n" is received or MAX string lenght is reached set the cmdReady flag
-		if (++inBufCount == CMD_STRING_LEN) ch = '\n';
-		else
-		{
-			ch = (char)Serial.read();
-			cmdString += ch;
-			//cmdString.concat(ch);						
-		}
-		if (ch == '\n') cmdReady = true; 
-		#ifdef _DEBUG
-		avrPrintf("\n-> ");
-		avrPrintf(ch);
-		avrPrintf("\nLen-> ");
-		avrPrintf(inBufCount);
-		#endif // DEBUG
-	}
-}
-
-/// <summary>
-/// Command Execution.
+/// \brief Command Execution.
 /// Execute a command and return the result.
-/// </summary>
-/// <param name="scp">A pointer to the implemented commands.</param>
-/// <param name="name">Name of the command to execute</param>
-/// <param name="argv">A pointer to the Argument list.</param>
+/// \param scp const ShellCommand_t* A pointer to the implemented commands.
+/// \param name char* Name of the command to execute
+/// \param argc int Number of arguments
+/// \param argv[] char* A pointer to the Argument list
+/// \return int Result of the command
+///
+///
 int CmdExec(const ShellCommand_t *scp, char *name, int argc, char *argv[])
 {
 	while (scp->sc_name != NULL)
@@ -283,12 +216,13 @@ int CmdExec(const ShellCommand_t *scp, char *name, int argc, char *argv[])
 	return 1;
 }
 
-/// <summary>
-/// System Time Command.
+/// \brief System Time Command.
 /// Not implemented.
-/// </summary>
-/// <param name="argc">Number of parameters.</param>
-/// <param name="argv">A pointer to the Argument list.</param>
+/// \param argc int Number of arguments
+/// \param argv[] char* Pointer to the argument list
+/// \return void
+///
+///
 void CmdSystime(int argc, char *argv[])
 {
 	(void) argv;
@@ -302,12 +236,13 @@ void CmdSystime(int argc, char *argv[])
 	avrPrintf("Sys Time: Not implemented yet\r\nsystime OK\r\n");
 }
 
-/// <summary>
-/// Info Command.
+/// \brief Info Command.
 /// Display firmware information.
-/// </summary>
-/// <param name="argc">Number of parameters.</param>
-/// <param name="argv">A pointer to the Argument list.</param>
+/// \param argc int Number of arguments
+/// \param argv[] char* Pointer to the argument list
+/// \return void
+///
+///
 void CmdInfo(int argc, char *argv[])
 {
 	(void)argv;
@@ -325,10 +260,11 @@ void CmdInfo(int argc, char *argv[])
 	avrPrintf("\r\ninfo OK\r\n");
 }
 
-/// <summary>
-/// List the Commands in the scp data structure.
-/// </summary>
-/// <param name="scp">Command data structure.</param>
+/// \brief List the Commands in the scp data structure.
+/// \param scp ShellCommand_t* Commands data structure
+/// \return void
+///
+///
 void ListCommands(ShellCommand_t *scp)
 {
 	//        Until the commands data structure has valid elements display the command name
@@ -340,11 +276,12 @@ void ListCommands(ShellCommand_t *scp)
 	}
 }
 
-/// <summary>
-/// Command Usage Function.
+/// \brief Command Usage Function.
 /// Display information how to use the command.
-/// </summary>
-/// <param name="strc">Command usage string.</param>
+/// \param str char* Command use string
+/// \return void
+///
+///
 void Usage(char *str)
 {
 	avrPrintf("Error: Usage-> ");
@@ -352,12 +289,14 @@ void Usage(char *str)
 	avrPrintf("\r\n");
 }
 
-/// <summary>
-/// Substring token extraction.
-/// </summary>
-/// <param name="strc">Input string.</param>
-/// <param name="delim">String containing a list of delimiters.</param>
-/// <param name="saveptr">Vector of String containing all the substrings.</param>
+/// \brief Substring token extraction (first one).
+/// It implements the strtok function of string.h library (to avoid to import the full library)
+/// \param str char* Input string
+/// \param delim const char* Delimiters string
+/// \param saveptr char** remaining tokens
+/// \return char* first token found
+///
+///
 char * Strtok(char *str, const char *delim, char **saveptr)
 {
 	char *token;
@@ -374,11 +313,13 @@ char * Strtok(char *str, const char *delim, char **saveptr)
 	return *token ? token : NULL;
 }
 
-/// <summary>
-/// Send the ACK
-/// </summary>
-/// <param name="argc">Number of parameters.</param>
-/// <param name="argv">A pointer to the Argument list.</param>
+/// \brief Send the ACK
+///
+/// \param argc int Number of arguments
+/// \param argv[] char* A pointer to the Argument list
+/// \return void
+///
+///
 void SendACK(int argc, char *argv[])
 {
 	//        If there are arguments send an error message
@@ -393,6 +334,12 @@ void SendACK(int argc, char *argv[])
 	}
 }
 
+/// \brief Send a string on the serial port
+///
+/// \param str const char* string to send
+/// \return void
+///
+///
 void avrPrintf(const char * str)
 {
 	nilSemWait(&SerialOutSem);
@@ -400,6 +347,12 @@ void avrPrintf(const char * str)
 	nilSemSignal(&SerialOutSem);
 }
 
+/// \brief Send an integer on the serial port
+///
+/// \param val const int integer to be sent
+/// \return void
+///
+///
 void avrPrintf(const int val)
 {
 	nilSemWait(&SerialOutSem);
@@ -407,6 +360,12 @@ void avrPrintf(const int val)
 	nilSemSignal(&SerialOutSem);
 }
 
+/// \brief Send an unsigned integer on the serial port
+///
+/// \param val const uint16_t long to be sent
+/// \return void
+///
+///
 void avrPrintf(const uint16_t val)
 {
 	nilSemWait(&SerialOutSem);
@@ -414,6 +373,12 @@ void avrPrintf(const uint16_t val)
 	nilSemSignal(&SerialOutSem);
 }
 
+/// \brief Send a long on the serial port
+///
+/// \param val const uint32_t long to be sent
+/// \return void
+///
+///
 void avrPrintf(const uint32_t val)
 {
 	nilSemWait(&SerialOutSem);
@@ -421,6 +386,12 @@ void avrPrintf(const uint32_t val)
 	nilSemSignal(&SerialOutSem);
 }
 
+/// \brief Send a double on the serial port
+///
+/// \param val const double double to be sent
+/// \return void
+///
+///
 void avrPrintf(const double val)
 {
 	nilSemWait(&SerialOutSem);
@@ -507,5 +478,107 @@ void printFloat(float value, int places)
 		digit = (int)tempfloat;
 		Serial.print(digit, DEC);
 		tempfloat -= (float)digit;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+///
+///	Thread Section
+///
+//////////////////////////////////////////////////////////////////////////
+#ifdef USE_SHELL_THREAD
+//
+//  This part of the code is used only if USE_SHELL_THREAD switch is defined
+//
+///< Shell Thread working area definition
+NIL_WORKING_AREA(waShellThread, STACKSIZE);
+
+/// \brief Shell thread loop.
+/// This thread waits a command from the serial port and executes it.
+/// Not USED!!!
+/// \param extern void * ShellThread: thread function
+/// \param char * arg[]: shell arguments
+/// \return void *
+///
+///
+NIL_THREAD(ShellThread, arg)
+//void vShellThread(void *p)
+{	
+	//        Reserve space for the command line string buffer
+	cmdString.reserve(CMD_STRING_LEN);
+	avrPrintf("\r\nAVR Shell;\r\n");
+	
+	while(TRUE)
+	{
+		char ch;
+		
+		//        Execute the USB-CDC task
+		CDC_Task();
+		//
+		//        If the '\n' is received the flag cmdReady is set and the input string is consumed by the Shell
+		//
+		if (cmdReady)
+		{
+			#ifdef DEBUG
+			//Serial.println("Received -> " + cmdString);
+			avrPrintf("Received -> ");
+			//avrPrintf(cmdString.toCharArray());
+			#endif // DEBUG
+			
+			char buffer[CMD_STRING_LEN];
+			//        Create the char buffer pointer for the shell
+			char *buf = (char *)&buffer;
+			cmdString.toCharArray(buf, CMD_STRING_LEN);
+			#ifdef DEBUG
+			avrPrintf(buf);
+			avrPrintf("Buf Len: ");
+			//avrPrintf((const int)cmdString.length());
+			avrPrintf(inBufCount);
+			#endif // DEBUG
+			//        Execute the Shell task with the data coming for the PC
+			ShellTask((void *)ShellCommands, buf);
+			//        Print the prompt			
+			avrPrintf(PROMPT);
+			//        Reinitialize the input buffer and the flag
+			cmdString = "";
+			cmdReady = false;
+			inBufCount = 0;
+		}
+	}
+}
+
+#endif // USE_SHELL_THREAD
+
+/// \brief USB-CDC Task
+/// USB CDC task code, read if a char is available on the serial port, and store it
+/// into cmdString data structure, if CR is received unlock the cmdReady flag to execute
+/// the command
+/// \return void
+///
+///
+void CDC_Task()
+{
+	char ch;
+	//
+	//        Until data are available from the Serial Port read the data and store it into the input buffer cmdString
+	//        Process ends if '\n' is received or the MAX input string length is reached
+	//
+	while(Serial.available())
+	{
+		//        If '\n" is received or MAX string lenght is reached set the cmdReady flag
+		if (++inBufCount == CMD_STRING_LEN) ch = '\n';
+		else
+		{
+			ch = (char)Serial.read();
+			cmdString += ch;
+			//cmdString.concat(ch);						
+		}
+		if (ch == '\n') cmdReady = true; 
+		#ifdef _DEBUG
+		avrPrintf("\n-> ");
+		avrPrintf(ch);
+		avrPrintf("\nLen-> ");
+		avrPrintf(inBufCount);
+		#endif // DEBUG
 	}
 }

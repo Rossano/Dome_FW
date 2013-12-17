@@ -1,7 +1,8 @@
-// 
-// 
-// 
-
+/**
+ *  \file dome.cpp
+ *  \brief Arduino Dome code
+ *  This is the implementation of the dome control via an Arduino microcontroller
+ */
 //////////////////////////////////////////////////////////////////////////
 ///
 ///	Include Section
@@ -21,8 +22,12 @@
 ///	Variable Section
 ///
 //////////////////////////////////////////////////////////////////////////
-
+/// \brief FIRO to synchronize the Dome thread when slewing a fixed number of steps
+///
 NilFIFO<int16_t, 2> turnfifo;				//	FIFO to unlock the Dome thread to turn a fix number of step
+/// \brief Dome object data structure.
+/// This object manages and synchronizes all the operations of the dome
+///
 DomeClass Dome;								//	Dome data structure to control the motors
 extern SEMAPHORE_DECL(EncoderCountSem, 0);	//	Semaphore to synchronize Dome thread on encoder pulses
 
@@ -32,18 +37,17 @@ extern SEMAPHORE_DECL(EncoderCountSem, 0);	//	Semaphore to synchronize Dome thre
 ///
 //////////////////////////////////////////////////////////////////////////
 
-///<summary>
-/// Default constructor. It initialize the DomeCLass data structure
-///</summary>
+/// \brief Default constructor. It initialize the DomeCLass data structure
+///
 DomeClass::DomeClass()
 {
 	state = NO_TURN;					//	Set as STOPPED
 	init();
 }
 
-///<summary>
-/// Dome HW configuration. It sets up the Arduino I/O for the motor control
-///</summary>
+/// \brief Dome HW configuration. It sets up the Arduino I/O for the motor control
+/// \return void
+///
 void DomeClass::init()
 {
 	pinMode(turnLeftPin, OUTPUT);
@@ -52,19 +56,19 @@ void DomeClass::init()
 	digitalWrite(turnRightPin, LOW);
 }
 
-///<summary>
-/// Returns the Dome state
-///</summary>
-///<return name='DomeStateType'>The Dome rotating state.</return>
+/// \brief Returns the Dome state
+///
+/// \return DomeStateType Dome rotating state
+///
 DomeStateType DomeClass::getState()
 {
 	return state;
 }
 
-///<summary>
-/// Turn the Dome left. This method drive the motor to turn anticlockwise.
-///</summary>
-///<return name='bool'>TRUE if operation successful, FALSE otherwise.</return>
+/// \brief Turn the Dome left. This method drive the motor to turn anticlockwise
+///
+/// \return bool TRUE if operation successful, FALSE otherwise
+///
 bool DomeClass::turnLeft()
 {
 	//	Start turning only if motor is stopped, else command is dropped
@@ -85,10 +89,12 @@ bool DomeClass::turnLeft()
 	}
 	return false;										//	Else retun FALSE
 }
-///<summary>
-/// Turn the Dome right. This method drive the motor to turn clockwise.
-///</summary>
-///<return name='bool'>TRUE if operation successful, FALSE otherwise.</return>
+
+/// \brief Turn the Dome right. This method drive the motor to turn clockwise
+///
+/// \return bool TRUE if operation successful, FALSE otherwise
+///
+///
 bool DomeClass::turnRight()
 {
 	//	Start turning only if motor is stopped, else the command is dropped
@@ -110,9 +116,10 @@ bool DomeClass::turnRight()
 	return false;										//	Else return FALSE
 }
 
-///<summary>
-/// Method to stop turning the Dome.
-///</summary>
+/// \brief Method to stop turning the Dome
+///
+/// \return void
+///
 void DomeClass::stop()
 {
 	//	If encoder is not simulated check on which direction the Dome is turning to deactivate
@@ -127,12 +134,14 @@ void DomeClass::stop()
 	state = NO_TURN;									//	Set state to no turning
 }
 
-/// <summary>
-/// Shell Command to turn the Dome left.
+/// \brief Shell Command to turn the Dome left.
 /// Activate the motor to turn anticlockwise the Dome.
-/// </summary>
-/// <param name="argc">Number of parameters.</param>
-/// <param name="argv">A pointer to the Argument list.</param>
+///
+/// \param argc int Arguments number
+/// \param argv[] char* Pointer to the list of arguments
+/// \return void
+///
+///
 void TurnLeft(int argc, char *argv[])
 {
 	(void) argv;
@@ -164,12 +173,14 @@ void TurnLeft(int argc, char *argv[])
 	avrPrintf("turn_left OK\r\n");									//	Tag successful operation to the serial port
 }
 
-/// <summary>
-/// Shell Command to turn the Dome right.
-/// Activate the motor to turn clockwise the Dome.
-/// </summary>
-/// <param name="argc">Number of parameters.</param>
-/// <param name="argv">A pointer to the Argument list.</param>
+/// \brief Shell Command to turn the Dome right.
+/// Activate the motor to turn clockwise the Dome
+///
+/// \param argc int Arguments number
+/// \param argv[] char* Pointer to list of arguments
+/// \return void
+///
+///
 void TurnRight(int argc, char *argv[])
 {
 	(void) argv;
@@ -199,12 +210,13 @@ void TurnRight(int argc, char *argv[])
 	avrPrintf("turn_right OK\r\n");									//	Tag successful operation to the serial port
 }
 
-/// <summary>
-/// Shell Command to stop turning the Dome.
-/// Deactivate the motor that is actually turning the Dome.
-/// </summary>
-/// <param name="argc">Number of parameters.</param>
-/// <param name="argv">A pointer to the Argument list.</param>
+/// \brief Shell Command to stop turning the Dome.
+/// Deactivate the motor that is actually turning the Dome
+///
+/// \param argc int Argument number
+/// \param argv[] char* Pointer to the list of arguments
+/// \return void
+///
 void Stop(int argc, char *argv[])
 {
 	(void) argv;
@@ -219,22 +231,28 @@ void Stop(int argc, char *argv[])
 	avrPrintf("stop OK\r\n");									//	Tag the successful operation on the serial port
 }
 
-/// Wrap up  command to return the Dome state.
-/// Dummy wrap up to access and simplify access to the Dome state information.
-/// </summary>
-/// <return name="DomeStateType">Dome Turning State.</return>
+/**
+ *  \brief Wrap up  command to return the Dome state.
+ *  Dummy wrap up to access and simplify access to the Dome state information.
+ *  \return DomeStateType Dome Turning State
+ *  
+ *  \details This function returns the state from the Dome object
+ */
 DomeStateType getDomeState()
 {
 	return Dome.getState();
 }
 
-/// <summary>
-/// Shell Command to read the Dome turning state.
-/// This command checks the passed arguments and returns on terminal the
-/// actual encoder absolute position.
-/// </summary>
-/// <param name="argc">Number of passed parameters</param>
-/// <param name="argv">List of parameter</param>
+/**
+ *  \brief Shell Command to read the Dome turning state.
+ *  This command checks the passed arguments and returns on terminal the
+ *  actual encoder absolute position.
+ *  \param [in] argc int Number of arguments
+ *  \param [in] argv char[]* Arguments list
+ *  \return void
+ *  
+ *  \details This function ask the state to the dome object and returns it on serial port
+ */
 void getState(int argc, char *argv[])
 {
 	(void)argv;
@@ -264,13 +282,16 @@ void getState(int argc, char *argv[])
 	}	
 }
 
-/// <summary>
-/// Shell Command to configure the Dome mechanical gear.
-/// This command checks the passed arguments and returns on terminal the
-/// actual encoder absolute position.
-/// </summary>
-/// <param name="argc">Number of passed parameters</param>
-/// <param name="argv">List of parameter</param>
+/**
+ *  \brief Shell Command to configure the Dome mechanical gear.
+ *  This command checks the passed arguments and returns on terminal the
+ *  actual encoder absolute position
+ *  \param [in] argc int Number of command arguments
+ *  \param [in] argv char[]* list of arguments
+ *  \return void
+ *  
+ *  \details This function configures the encoder object to the value of the dome mechanical system.
+ */
 void gearCfg(int argc, char *argv[])
 {
 	(void)argv;
