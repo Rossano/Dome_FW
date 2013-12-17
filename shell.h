@@ -16,10 +16,10 @@
 #define SHELL_MAX_LINE_LENGTH       16					//	Shell input buffer length
 #define SHELL_MAX_ARGUMENTS         4					//	Shell MAX number of arguments
 #define SHELL_PROMPT                "AVR> "				//	Shell prompt
-#define FW_VERSION                  "0.4.3"				//	Firmware Revision
+#define FW_VERSION                  "0.4.4"				//	Firmware Revision
 #define OS_VERSION                  NIL_KERNEL_VERSION	//	OS type and revision
 #define CR							"\r\n"				//	Shell EOL characters
-#define CMD_STRING_LEN				16					//	Command String Lenght
+#define CMD_STRING_LEN				32					//	Command String Lenght
 #define PROMPT						"AVR> "				//	Shell prompt
 #define SOL_LED						13					//	Sign of Life LED
 #undef USE_SHELL_THREAD									//	Activate/Deactivate the use of the shell as thread
@@ -108,6 +108,12 @@ static ShellCommand_t ShellCommands[] =
 	{
 		"stop", Stop
 	},
+	{
+		"get_state", getState
+	},
+	{
+		"gear_config", gearCfg 
+	},
 /*	{
 		"adc_init", ADCInit
 	},
@@ -137,6 +143,7 @@ void printDouble(double val, byte precision);
 void printFloat(float value, int places);
 void avrPrintf(const char * str);
 void avrPrintf(const int val);
+void avrPrintf(const uint16_t val);
 void avrPrintf(const uint32_t val);
 void avrPrintf(const double val);
 void ShellTask(void *p, char *line);

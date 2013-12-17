@@ -257,7 +257,7 @@ void getPosition(int argc, char *argv[])
 	}
 	char buf[10];										//	Buffer to store the ASCII conversion of the position
 	//        Else display a string stating that it is not implemented
-	avrPrintf("Position= ");							//	Tag for the PC application
+	avrPrintf("Position = ");							//	Tag for the PC application
 	//
 	//	If Position has to be returned as angle carry out he value and send it to the serial port
 	//
@@ -271,9 +271,9 @@ void getPosition(int argc, char *argv[])
 	avrPrintf(ltoa(Encoder.Position(), buf, 10));
 	#endif // DEBUG
 	#else
-	avrPrintf(ltoa(Encoder.Position(), buf, 10));	//	Send the position as circular buffer counter
+	avrPrintf(ltoa(Encoder.Position(), buf, 10));		//	Send the position as circular buffer counter
 	#endif
-	avrPrintf("OK\r\n");								//	Tag the PC application  that all is OK
+	avrPrintf(" pos OK\r\n");							//	Tag the PC application  that all is OK
 }
 
 #ifdef ENCODER_SIMULATION
@@ -450,6 +450,7 @@ NIL_THREAD(EncoderThread, arg)
 		#else
 		//	Position is sent as circular buffer counter
 			avrPrintf(ltoa(Encoder.Position(), buf, 10));	//	Send the angle position counter on serial port
+			avrPrintf(CR);
 		#endif
 		#ifdef MEMORY_CHECK
 				avrPrintf("freeMemory() = ");		

@@ -161,7 +161,7 @@ void TurnLeft(int argc, char *argv[])
 		*p = -1 * atoi(argv[0]);							//	Update the FIFO slot with the # of steps to turn (<0 -> left)
 		turnfifo.signalData();								//	Signal that there is a new data into the FIFO
 	}
-	avrPrintf("OK\r\n");									//	Tag successful operation to the serial port
+	avrPrintf("turn_left OK\r\n");									//	Tag successful operation to the serial port
 }
 
 /// <summary>
@@ -196,7 +196,7 @@ void TurnRight(int argc, char *argv[])
 		#endif
 		turnfifo.signalData();								//	Signal that there is a new data into the FIFO
 	}
-	avrPrintf("OK\r\n");									//	Tag successful operation to the serial port
+	avrPrintf("turn_right OK\r\n");									//	Tag successful operation to the serial port
 }
 
 /// <summary>
@@ -216,7 +216,7 @@ void Stop(int argc, char *argv[])
 	}
 	//        Else stop the Turning Dome
 	Dome.stop();											//	Activate the method to stop turning
-	avrPrintf("OK\r\n");									//	Tag the successful operation on the serial port
+	avrPrintf("stop OK\r\n");									//	Tag the successful operation on the serial port
 }
 
 /// Wrap up  command to return the Dome state.
@@ -227,6 +227,76 @@ DomeStateType getDomeState()
 {
 	return Dome.getState();
 }
+
+/// <summary>
+/// Shell Command to read the Dome turning state.
+/// This command checks the passed arguments and returns on terminal the
+/// actual encoder absolute position.
+/// </summary>
+/// <param name="argc">Number of passed parameters</param>
+/// <param name="argv">List of parameter</param>
+void getState(int argc, char *argv[])
+{
+	(void)argv;
+	//	if there are arguments plots an error message
+	if(argc > 0)
+	{
+		Usage("get_state");
+		return;
+	}
+	//	checks the state and plots it to the serial port accordingly
+	DomeStateType foo = getDomeState();
+	if(foo == NO_TURN) 
+	{
+		avrPrintf("\r\nstop\r\nget_state OK\r\n");
+	}
+	else if(foo == TURN_LEFT)
+	{
+		avrPrintf("\r\nturn_left\r\nget_state OK\r\n");
+	}		
+	else if(foo == TURN_RIGHT)
+	{
+		avrPrintf("\r\nturn_right\r\nget_state OK\r\n");
+	}
+	else
+	{
+		avrPrintf("\r\nget_state Error: no valid state\r\n");
+	}	
+}
+
+/// <summary>
+/// Shell Command to configure the Dome mechanical gear.
+/// This command checks the passed arguments and returns on terminal the
+/// actual encoder absolute position.
+/// </summary>
+/// <param name="argc">Number of passed parameters</param>
+/// <param name="argv">List of parameter</param>
+void gearCfg(int argc, char *argv[])
+{
+	(void)argv;
+	//	if there are less than 0 or more than 2 arguments print an error message
+	//	as well as the actual gear dome configuration
+	if((argc > 2) || (argv ==0))
+	{
+		Usage("gear_config <Encoder Pulse Number> [<gear multiplication ratio>]\nActual values:\nEncoder Pulse number = ");
+		avrPrintf(Encoder.encoderResolution);
+		avrPrintf("\nGear Ratio = ");
+		avrPrintf(int(Encoder.gearRatio));
+		return;
+	}
+	//	Try to convert the first argument and assign it to the encoder resolution variable
+	int foo=atoi(argv[1]);
+	Encoder.encoderResolution = foo;
+	//	Try to convert the second argument if it exists
+	if(argc==2)
+	{
+		float ffoo = atof(argv[2]);
+		Encoder.gearRatio = ffoo;
+		Encoder.encoderMaxCount = Encoder.encoderResolution * Encoder.gearRatio;		
+	}
+	avrPrintf("\r\ngearCfg OK\r\n");
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 ///

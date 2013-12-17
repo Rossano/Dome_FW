@@ -95,6 +95,8 @@ extern EncoderClass Encoder;
 void encoderISR();							//	Encoder pulse reception ISR
 void homeISR();								//	Home pulse reception ISR
 void getPosition(int argc, char *argv[]);	//	Shell command to read the encoder position
+void getState(int argc, char *argv[]);
+void gearCfg(int argc, char *argv[]);
 
 //////////////////////////////////////////////////////////////////////////
 ///	Function Wraps-up to start/stop the encoder timer 

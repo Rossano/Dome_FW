@@ -299,7 +299,7 @@ void CmdSystime(int argc, char *argv[])
 		return;
 	}
 	//        Else display a string stating that it is not implemented
-	avrPrintf("Sys Time: Not implemented yet\r\nOK\r\n");
+	avrPrintf("Sys Time: Not implemented yet\r\nsystime OK\r\n");
 }
 
 /// <summary>
@@ -322,7 +322,7 @@ void CmdInfo(int argc, char *argv[])
 	avrPrintf(FW_VERSION);
 	avrPrintf("\r\nOS Version: ");
 	avrPrintf(OS_VERSION);
-	avrPrintf("\r\nOK\r\n");
+	avrPrintf("\r\ninfo OK\r\n");
 }
 
 /// <summary>
@@ -389,7 +389,7 @@ void SendACK(int argc, char *argv[])
 	else
 	{
 		//        Send the ACK
-		avrPrintf("ACK\r\nOK\r\n");
+		avrPrintf("ACK\r\nget_ACK OK\r\n");
 	}
 }
 
@@ -401,6 +401,13 @@ void avrPrintf(const char * str)
 }
 
 void avrPrintf(const int val)
+{
+	nilSemWait(&SerialOutSem);
+	Serial.print(val);
+	nilSemSignal(&SerialOutSem);
+}
+
+void avrPrintf(const uint16_t val)
 {
 	nilSemWait(&SerialOutSem);
 	Serial.print(val);

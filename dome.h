@@ -95,6 +95,10 @@ extern DomeClass Dome;									//	Dome data structure
 void TurnLeft(int argc, char *argv[]);					//        Shell command to Turn Dome to the left
 void TurnRight(int argc, char *argv[]);					//        Shell command to Turn Dome to the right
 void Stop(int argc, char *argv[]);						//        Shell command to Stop turning the Dome
+void getState(int argc, char *argv[]);
+void gearCfg(int argc, char *argv[]);
+
+DomeStateType getDomeState();						//	Wrap up function to get the Dome rotating state
 
 #ifndef ENCODER_SIMULATION
 	DomeStateType getDomeState();						//	Wrap up function to get the Dome rotating state
