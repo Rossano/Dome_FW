@@ -35,7 +35,7 @@
 #define SHELL_MAX_LINE_LENGTH       32					//	Shell input buffer length
 #define SHELL_MAX_ARGUMENTS         4					//	Shell MAX number of arguments
 #define SHELL_PROMPT                "AVR> "				//	Shell prompt
-#define FW_VERSION                  "0.4.4"				//	Firmware Revision
+#define FW_VERSION                  "0.4.6"				//	Firmware Revision
 #define OS_VERSION                  NIL_KERNEL_VERSION	//	OS type and revision
 #define CR							"\r\n"				//	Shell EOL characters
 #define CMD_STRING_LEN				32					//	Command String Lenght
@@ -115,6 +115,9 @@ static ShellCommand_t ShellCommands[] =
 		"pos", getPosition
 	},
 	{
+		"set_pos", setPosition
+	},
+	{
 		"turn_left", TurnLeft
 	},
 	{
@@ -160,6 +163,7 @@ void printDouble(double val, byte precision);                                   
 void printFloat(float value, int places);                                       //  Float to ASCII on serial port
 void avrPrintf(const char * str);                                               //  Send a string on serial port
 void avrPrintf(const int val);                                                  //  Send an integer on serial port
+void avrPrintf(const uint16_t val);
 void avrPrintf(const uint32_t val);                                             //  Send a long on serial port
 void avrPrintf(const double val);                                               //  Send a double on serial port
 void ShellTask(void *p, char *line);                                            //  Shell Task

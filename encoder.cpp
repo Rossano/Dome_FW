@@ -29,7 +29,7 @@
 
 #undef DEBUG								//	DEBUG FLAG
 #define ENCODER_SIMULATION					//	FLAG to simulate the Encoder 
-#define DEBUG_TIMER_INTERVAL_US		3000000	//	Simulate Encoder time
+#define DEBUG_TIMER_INTERVAL_US		42857	//	Simulate Encoder time (1400 rpm)
 #undef TIMER_DEBUG							//	FLAG to activate the Simulated Encoder debug
 
 //
@@ -289,6 +289,23 @@ void getPosition(int argc, char *argv[])
 	avrPrintf(ltoa(Encoder.Position(), buf, 10));		//	Send the position as circular buffer counter
 	#endif
 	avrPrintf(" pos OK\r\n");							//	Tag the PC application  that all is OK
+}
+
+void setPosition(int argc, char *argv[])
+{
+	(void)	argv;
+	//	if there is not only one  display an error message
+	if(argc != 1)
+	{
+		Usage("Error: set_pos <counter value>\nActual value = ");
+		avrPrintf(Encoder.Position());
+		avrPrintf(CR);
+		return;
+	}		
+	//	Set the new position
+	Encoder.SetPosition(atoi(argv[1]));
+	//	Display the return message
+	avrPrintf("\r\nset_po OK\r\n");
 }
 
 #ifdef ENCODER_SIMULATION

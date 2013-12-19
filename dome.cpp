@@ -297,21 +297,22 @@ void gearCfg(int argc, char *argv[])
 	(void)argv;
 	//	if there are less than 0 or more than 2 arguments print an error message
 	//	as well as the actual gear dome configuration
-	if((argc > 2) || (argv ==0))
+	if((argc > 2) || (argc == 0))
 	{
 		Usage("gear_config <Encoder Pulse Number> [<gear multiplication ratio>]\nActual values:\nEncoder Pulse number = ");
 		avrPrintf(Encoder.encoderResolution);
 		avrPrintf("\nGear Ratio = ");
 		avrPrintf(int(Encoder.gearRatio));
+		avrPrintf(CR);
 		return;
 	}
 	//	Try to convert the first argument and assign it to the encoder resolution variable
-	int foo=atoi(argv[1]);
+	int foo=atoi(argv[0]);
 	Encoder.encoderResolution = foo;
 	//	Try to convert the second argument if it exists
 	if(argc==2)
 	{
-		float ffoo = atof(argv[2]);
+		float ffoo = atof(argv[1]);
 		Encoder.gearRatio = ffoo;
 		Encoder.encoderMaxCount = Encoder.encoderResolution * Encoder.gearRatio;		
 	}
