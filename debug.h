@@ -11,7 +11,7 @@
 	#include "WProgram.h"
 #endif
 
-#define DEBUG_TIMER_INTERVAL_US		3000000
+//#define DEBUG_TIMER_INTERVAL_US		3000000
 #define TIMER_DEBUG
 #undef TIMER_DEBUG
 

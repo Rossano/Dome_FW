@@ -35,7 +35,7 @@
 #define SHELL_MAX_LINE_LENGTH       32					//	Shell input buffer length
 #define SHELL_MAX_ARGUMENTS         4					//	Shell MAX number of arguments
 #define SHELL_PROMPT                "AVR> "				//	Shell prompt
-#define FW_VERSION                  "0.4.6"				//	Firmware Revision
+#define FW_VERSION                  "0.5.1"				//	Firmware Revision
 #define OS_VERSION                  NIL_KERNEL_VERSION	//	OS type and revision
 #define CR							"\r\n"				//	Shell EOL characters
 #define CMD_STRING_LEN				32					//	Command String Lenght

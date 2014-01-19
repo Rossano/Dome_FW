@@ -45,7 +45,7 @@
       </ToolNumber>
       <Channel>
         <host>127.0.0.1</host>
-        <port>48985</port>
+        <port>21167</port>
         <ssl>False</ssl>
       </Channel>
     </com_atmel_avrdbg_tool_simulator>

@@ -29,7 +29,7 @@
 
 #undef DEBUG								//	DEBUG FLAG
 #define ENCODER_SIMULATION					//	FLAG to simulate the Encoder 
-#define DEBUG_TIMER_INTERVAL_US		42857	//	Simulate Encoder time (1400 rpm)
+#define DEBUG_TIMER_INTERVAL_US		29170 	//	Simulate Encoder time (1400 rpm) = 1400/60/80/100 (old 429) x 10 don't know why
 #undef TIMER_DEBUG							//	FLAG to activate the Simulated Encoder debug
 
 //
@@ -319,6 +319,9 @@ void setPosition(int argc, char *argv[])
 	 */
 	void startEncoderTimer()
 	{
+		avrPrintf("Start Encoder Timer value: ");
+		avrPrintf(DEBUG_TIMER_INTERVAL_US);
+		avrPrintf(CR);
 		nilTimer1Start(DEBUG_TIMER_INTERVAL_US);
 	}	
 
@@ -476,13 +479,14 @@ NIL_WORKING_AREA(waEncoderThread, STACKSIZE);
  */
 NIL_THREAD(EncoderThread, arg)
 {
+	int count = 0;
 	while (TRUE)
 	{
 		//	If Encoder is simulated
 		#ifdef ENCODER_SIMULATION 
 			nilSemWait(&DebugSem);				//	Await a new event on the Debug semaphore
 			nilSysLock();
-			avrPrintf("Tick\n");				//	Send a tag to the PC application
+//			avrPrintf("Tick\n");				//	Send a tag to the PC application
 			//
 			//	In simulated conditions, the Dome turning state information are store by the Dome data structure
 			//	Therefore it used to increment/decrement the Encoder position
@@ -505,19 +509,22 @@ NIL_THREAD(EncoderThread, arg)
 			nilSemWait(&encoderSem);			//	Encoder position is consumed elsewhere so here
 												//	just awaits the encoder pulse to send the new position
 		#endif	//	ENCODER_SIMULATION		
-		char buf[10];
-		avrPrintf("Position= ");				//	Tag for the PC application
-		//	If the position has to be reported as angle
-		#if (RETURN_ANGLE == 1)
+		if (++count == 100)
+		{
+			char buf[10];
+			avrPrintf("Position= ");				//	Tag for the PC application
+			//	If the position has to be reported as angle
+			#if (RETURN_ANGLE == 1)
 			//	Carry out the angle
 			double angle = (360 * (double)Encoder.Position()) / 16.0;//(double)ENCODER_RESOLUTION; //Encoder.encoderMaxCount);
-			avrPrintf(angle);					//	Send the angle to the serial port		
+			avrPrintf(angle);					//	Send the angle to the serial port
 			avrPrintf(CR);
-		#else
-		//	Position is sent as circular buffer counter
+			#else
+			//	Position is sent as circular buffer counter
 			avrPrintf(ltoa(Encoder.Position(), buf, 10));	//	Send the angle position counter on serial port
 			avrPrintf(CR);
-		#endif
+			#endif	
+		}		
 		#ifdef MEMORY_CHECK
 				avrPrintf("freeMemory() = ");		
 				avrPrintf(freeMemory());
