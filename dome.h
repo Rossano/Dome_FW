@@ -188,6 +188,17 @@ void getState(int argc, char *argv[]);
  */
 void gearCfg(int argc, char *argv[]);
 /**
+ *  \brief Shell Command to configure the Dome in debug mode.
+ *  Debug mode is when the encoder HW is not physically present and it is then
+ *  simulated. No parameter returns the actual status, else it looks for ON/OFF to set clear the debug mode
+ *  \param [in] argc int Number of command arguments
+ *  \param [in] argv char[]* list of arguments
+ *  \return void
+ *  
+ *  \details This function configures the encoder object to the value of the dome mechanical system.
+ */
+//void debugMode(int argc, char *argv[]);
+/**
  *  \brief Wrap up  command to return the Dome state.
  *  Dummy wrap up to access and simplify access to the Dome state information.
  *  \return DomeStateType Dome Turning State
@@ -196,9 +207,9 @@ void gearCfg(int argc, char *argv[]);
  */
 DomeStateType getDomeState();						//	Wrap up function to get the Dome rotating state
 
-#ifndef ENCODER_SIMULATION
-	DomeStateType getDomeState();						//	Wrap up function to get the Dome rotating state
-#endif
+//#ifndef ENCODER_SIMULATION
+	//DomeStateType getDomeState();						//	Wrap up function to get the Dome rotating state
+//#endif
 
 #endif
 

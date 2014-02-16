@@ -11,15 +11,16 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include <NilRTOS.h>		//	RTOS inclusion
+#include <NilTimer1.h>		//	NilRTOS Timer module inclusion
 
 #include "board.h"			//	Board definition inclusion
 #include "encoder.h"		//	Encoder Code inclusion
 #include "shell.h"			//	Shell Code inclusion
 
-#undef MEMORY_CHECK
-#ifdef MEMORY_CHECK
-	#include "MemoryFree.h"	//	Memory Check Global Code inclusion
-#endif
+//#undef MEMORY_CHECK
+//#ifdef MEMORY_CHECK
+	//#include "MemoryFree.h"	//	Memory Check Global Code inclusion
+//#endif
 
 //////////////////////////////////////////////////////////////////////////
 ///
@@ -28,7 +29,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 #undef DEBUG								//	DEBUG FLAG
-#define ENCODER_SIMULATION					//	FLAG to simulate the Encoder 
+//#define ENCODER_SIMULATION					//	FLAG to simulate the Encoder 
 #define DEBUG_TIMER_INTERVAL_US		29170 	//	Simulate Encoder time (1400 rpm) = 1400/60/80/100 (old 429) x 10 don't know why
 #undef TIMER_DEBUG							//	FLAG to activate the Simulated Encoder debug
 
@@ -36,9 +37,9 @@
 //	If Encoder simulation is used it is mandatory to include the 
 //	RTOS timer module
 //
-#ifdef ENCODER_SIMULATION 
-	#include <NilTimer1.h>					//	NilRTOS Timer module inclusion
-#endif // ENCODER_SIMULATION
+//#ifdef ENCODER_SIMULATION 
+//#include <NilTimer1.h>					//	NilRTOS Timer module inclusion
+//#endif // ENCODER_SIMULATION
 
 //////////////////////////////////////////////////////////////////////////
 ///
@@ -51,18 +52,21 @@
 ///
 EncoderClass Encoder;						//	Encoder data structure
 
+
+bool encoderDebugMode = false;
+
 //
 //	If Encoder simulation define a semaphore to synchronize the Encoder thread
 //	and include the Dome data structure for the turning direction
 //	Else just declare a semaphore to synchronize Encoder thread
 //
-#ifdef ENCODER_SIMULATION 
+//#ifdef ENCODER_SIMULATION 
 	#include "dome.h"						//	Include the Dome module
 	SEMAPHORE_DECL(DebugSem, 0);			//	Semaphore indicating Encoder thread that a new pulse arrived
 	extern DomeClass Dome;
-#else
+//#else
 	SEMAPHORE_DECL(encoderSem, 0);			//	Semaphore indicating Encoder thread of a new pulse
-#endif // ENCODER_SIMULATION
+//#endif // ENCODER_SIMULATION
 
 /// \brief Semaphore used to synchronized the counting of slewing steps
 ///
@@ -126,17 +130,17 @@ void EncoderClass::init()
 	//
 	//	If Encoder is not simulated attach IRS to the Encoder external pin IRQ
 	//
-	#ifdef ENCODER_SIMULATION 
+//	#ifdef ENCODER_SIMULATION 
 		///	DO NOTHING		
-	#else	
+//	#else	
 		///	Configure IRQ on external pins
 		attachInterrupt(IRQ_PINA, encoderISR, RISING);
-		#if (ENCODER_IMPLEMENTATION = A_AND_B)
+		#if (ENCODER_IMPLEMENTATION == A_AND_B)
 		//	Configure interrupt on B port only if it is used
 			attachInterrupt(IRQ_PINB, encoderISR, RISING);
 		#endif
 		attachInterrupt(IRQ_HOME, homeISR, RISING);
-	#endif //ENCODER_SIMULATION		
+//	#endif //ENCODER_SIMULATION		
 }
 
 /// \brief Method to read the Encoder position
@@ -282,11 +286,11 @@ void getPosition(int argc, char *argv[])
 	//	Send it to the serial port
 	avrPrintf(angle);
 	#ifdef DEBUG
-	avrPrintf("\nCounter= ");
-	avrPrintf(ltoa(Encoder.Position(), buf, 10));
+		avrPrintf("\nCounter= ");
+		avrPrintf(ltoa(Encoder.Position(), buf, 10));
 	#endif // DEBUG
 	#else
-	avrPrintf(ltoa(Encoder.Position(), buf, 10));		//	Send the position as circular buffer counter
+		avrPrintf(ltoa(Encoder.Position(), buf, 10));		//	Send the position as circular buffer counter
 	#endif
 	avrPrintf(" pos OK\r\n");							//	Tag the PC application  that all is OK
 }
@@ -308,7 +312,45 @@ void setPosition(int argc, char *argv[])
 	avrPrintf("\r\nset_po OK\r\n");
 }
 
-#ifdef ENCODER_SIMULATION
+/**
+ *  \brief Shell Command to configure the Dome in debug mode.
+ *  Debug mode is when the encoder HW is not physically present and it is then
+ *  simulated. No parameter returns the actual status, else it looks for ON/OFF to set clear the debug mode
+ *  \param [in] argc int Number of command arguments
+ *  \param [in] argv char[]* list of arguments
+ *  \return void
+ *  
+ *  \details This function configures the encoder object to the value of the dome mechanical system.
+ */
+void debugMode(int argc, char *argv[])
+{
+	(void)argv;
+	if(argc > 1)
+	{
+		Usage("debug <ON/OFF>");
+		avrPrintf("Error: debug\r\n");
+		return;
+	}
+	else if (argc == 0)
+	{
+		if (encoderDebugMode) 
+		{
+			avrPrintf("debugMode: ON\r\n");
+		}
+		else
+		{
+			avrPrintf("debugMode: OFF\r\n");
+		}				
+	}
+	else if (argc == 1)
+	{		
+		if (!strcmp(argv[0], "ON")) encoderDebugMode = TRUE;
+		else if (!strcmp(argv[0], "OFF")) encoderDebugMode=FALSE;
+	}
+	avrPrintf("debug OK\r\n");
+}
+
+//#ifdef ENCODER_SIMULATION
 	
 	/**
 	 *  \brief Function Wrap up to start the RTOS timer
@@ -322,6 +364,7 @@ void setPosition(int argc, char *argv[])
 		avrPrintf("Start Encoder Timer value: ");
 		avrPrintf(DEBUG_TIMER_INTERVAL_US);
 		avrPrintf(CR);
+		//nilTimer1Start(DEBUG_TIMER_INTERVAL_US);
 		nilTimer1Start(DEBUG_TIMER_INTERVAL_US);
 	}	
 
@@ -337,7 +380,7 @@ void setPosition(int argc, char *argv[])
 		nilTimer1Stop();
 	}
 	
-#endif // ENCODER_SIMULATION
+//#endif // ENCODER_SIMULATION
 
 //////////////////////////////////////////////////////////////////////////
 ///
@@ -345,7 +388,7 @@ void setPosition(int argc, char *argv[])
 ///
 //////////////////////////////////////////////////////////////////////////
 
-#ifdef ENCODER_SIMULATION 
+//#ifdef ENCODER_SIMULATION 
 
 //////////////////////////////////////////////////////////////////////////
 ///	DebugThread
@@ -370,10 +413,19 @@ NIL_WORKING_AREA(waDebugThread, 64);
 		avrPrintf("Starting Debug Timer");		//	Plot debug message if flag is active
 	#endif
 	
+	//avrPrintf("Starting Encoder Simulation Thread\r\n");
+	//for(int i=0; i<10000;i++);
+	//avrPrintf("End delay\r\n");
 	while(TRUE)
 	{
+//		avrPrintf("Wait Timer \r\n");
 		nilTimer1Wait();						//	Wait a new pulse from a timer
+//		avrPrintf("Timer exipered\r\n");
+		#if 0
 		nilSemSignal(&DebugSem);				//	Signal the new pulse to the encoder unlocking a semaphore
+		#endif
+		nilSemSignal(&encoderSem);				//	Signal the new pulse to the encoder unlocking a semaphore
+//		avrPrintf("Tick");
 //		nilSemSignal(&EncoderCountSem);
 		#ifdef TIMER_DEBUG
 			avrPrintf("Tick");
@@ -386,7 +438,7 @@ NIL_WORKING_AREA(waDebugThread, 64);
 	}
 }
 
-#else
+//#else
 
 //////////////////////////////////////////////////////////////////////////
 ///	If Encoder is not simulated, the pulse management is done via
@@ -452,7 +504,7 @@ void homeISR()
 	NIL_IRQ_EPILOGUE();									//	Requested by RTOS
 }
 
-#endif // not def DEBUG
+//#endif // not def DEBUG
 
 //////////////////////////////////////////////////////////////////////////
 ///
@@ -480,55 +532,87 @@ NIL_WORKING_AREA(waEncoderThread, STACKSIZE);
 NIL_THREAD(EncoderThread, arg)
 {
 	int count = 0;
+	
+	avrPrintf("STarting Encoder Thread\r\n");
+	
 	while (TRUE)
 	{
 		//	If Encoder is simulated
-		#ifdef ENCODER_SIMULATION 
-			nilSemWait(&DebugSem);				//	Await a new event on the Debug semaphore
-			nilSysLock();
-//			avrPrintf("Tick\n");				//	Send a tag to the PC application
-			//
-			//	In simulated conditions, the Dome turning state information are store by the Dome data structure
-			//	Therefore it used to increment/decrement the Encoder position
-			//
-			if(Dome.getState() == TURN_RIGHT)
-			{
-				//if(Encoder.Position() == MAX_COUNT-1) Encoder.SetPosition(0);
-				//else Encoder.SetPosition(Encoder.Position() + 1);
-				Encoder++;	
-			}
-			else if(Dome.getState() == TURN_LEFT)
-			{
-				//if(Encoder.Position() == 0) Encoder.SetPosition(MAX_COUNT - 1);
-				//else Encoder.SetPosition(Encoder.Position() - 1);
-				Encoder--;
-			}
-			nilSysUnlock();
-		#else
-		//	Encoder HW is available
-			nilSemWait(&encoderSem);			//	Encoder position is consumed elsewhere so here
-												//	just awaits the encoder pulse to send the new position
-		#endif	//	ENCODER_SIMULATION		
-		if (++count == 100)
+//		#ifdef ENCODER_SIMULATION 
+		//encoderDebugMode=TRUE;
+		
+		if (Dome.getState() != NO_TURN)
 		{
-			char buf[10];
-			avrPrintf("Position= ");				//	Tag for the PC application
-			//	If the position has to be reported as angle
-			#if (RETURN_ANGLE == 1)
-			//	Carry out the angle
-			double angle = (360 * (double)Encoder.Position()) / 16.0;//(double)ENCODER_RESOLUTION; //Encoder.encoderMaxCount);
-			avrPrintf(angle);					//	Send the angle to the serial port
-			avrPrintf(CR);
-			#else
-			//	Position is sent as circular buffer counter
-			avrPrintf(ltoa(Encoder.Position(), buf, 10));	//	Send the angle position counter on serial port
-			avrPrintf(CR);
-			#endif	
-		}		
-		#ifdef MEMORY_CHECK
-				avrPrintf("freeMemory() = ");		
-				avrPrintf(freeMemory());
+			if (encoderDebugMode)
+			{
+				#ifdef DEBUG
+					avrPrintf("Awaiting freeing semaphore\r\n");
+				#endif // DEBUG
+				#if 0
+				nilSemWait(&DebugSem);				//	Await a new event on the Debug semaphore
+				#endif
+				nilSemWait(&encoderSem);			//	Await a new event on the Debug semaphore
+				nilSysLock();
+				
+				#ifdef DEBUG
+					avrPrintf("Tick\n");				//	Send a tag to the PC application
+				#endif
+				//
+				//	In simulated conditions, the Dome turning state information are store by the Dome data structure
+				//	Therefore it used to increment/decrement the Encoder position
+				//
+				if(Dome.getState() == TURN_RIGHT)
+				{
+					//if(Encoder.Position() == MAX_COUNT-1) Encoder.SetPosition(0);
+					//else Encoder.SetPosition(Encoder.Position() + 1);
+					Encoder++;
+				}
+				else if(Dome.getState() == TURN_LEFT)
+				{
+					//if(Encoder.Position() == 0) Encoder.SetPosition(MAX_COUNT - 1);
+					//else Encoder.SetPosition(Encoder.Position() - 1);
+					Encoder--;
+				}
+				else
+				{
+					avrPrintf("It shouldn't be here\r\n");
+				}
+				nilSysUnlock();
+			}
+			//#else
+			else
+			{
+				//avrPrintf("No debug branch :o(\r\n");
+				//	Encoder HW is available
+				nilSemWait(&encoderSem);			//	Encoder position is consumed elsewhere so here
+			}										//	just awaits the encoder pulse to send the new position
+			//#endif	//	ENCODER_SIMULATION
+			if (++count == 100)
+			{
+				char buf[10];
+				avrPrintf("Position= ");				//	Tag for the PC application
+				//	If the position has to be reported as angle
+				#if (RETURN_ANGLE == 1)
+				//	Carry out the angle
+				double angle = (360 * (double)Encoder.Position()) / 16.0;//(double)ENCODER_RESOLUTION; //Encoder.encoderMaxCount);
+				avrPrintf(angle);					//	Send the angle to the serial port
 				avrPrintf(CR);
-		#endif // MEMORY_CHECK
+				#else
+				//	Position is sent as circular buffer counter
+				avrPrintf(ltoa(Encoder.Position(), buf, 10));	//	Send the angle position counter on serial port
+				avrPrintf(CR);
+				#endif
+			}	
+		}
+		else
+		{
+			nilThdSleepSeconds(100);
+		}			
+				
+		//#ifdef MEMORY_CHECK
+				//avrPrintf("freeMemory() = ");		
+				//avrPrintf(freeMemory());
+				//avrPrintf(CR);
+		//#endif // MEMORY_CHECK
 	}
 }

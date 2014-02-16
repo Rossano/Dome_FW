@@ -39,14 +39,14 @@
 ///
 ///		Default definitions for the Encoder Configuration
 /// 
-#define ENCODER_RESOLUTION	16		//	Resolution of the Encoder
+#define ENCODER_RESOLUTION	16000		//	Resolution of the Encoder
 #define ENCODER_GEAR_RATIO  1.0		//	Ratio between Encoder Gear and Final Gear
 //	Max counts to make a full turn of the final gear
 #define ENCODER_MAX_COUNT	floor(ENCODER_RESOLUTION * ENCODER_GEAR_RATIO)
 //	Encoder interface: A_ONLY, A_AND_B,  FULL
 #define ENCODER_IMPLEMENTATION	A_ONLY
-#define MAX_COUNT	9				//	Max counts to make a full turn of the final gear
-#define ENCODER_SIMULATION			//	Activate the simulation of the encoder
+#define MAX_COUNT	16000				//	Max counts to make a full turn of the final gear
+//#define ENCODER_SIMULATION			//	Activate the simulation of the encoder
 #define RETURN_ANGLE		0		//	0-> Activate the position return as circular buffer count
 									//	1-> Activate the position return as angle
 
@@ -102,6 +102,9 @@ class EncoderClass
 
 extern EncoderClass Encoder;
 
+//static bool encoderDebugMode=true;
+extern bool encoderDebugMode;
+
 //////////////////////////////////////////////////////////////////////////
 ///
 ///	Function Prototype Section
@@ -114,16 +117,27 @@ void getPosition(int argc, char *argv[]);	//	Shell command to read the encoder p
 void setPosition(int argc, char *argv[]);
 void getState(int argc, char *argv[]);
 void gearCfg(int argc, char *argv[]);
+/**
+ *  \brief Shell Command to configure the Dome in debug mode.
+ *  Debug mode is when the encoder HW is not physically present and it is then
+ *  simulated. No parameter returns the actual status, else it looks for ON/OFF to set clear the debug mode
+ *  \param [in] argc int Number of command arguments
+ *  \param [in] argv char[]* list of arguments
+ *  \return void
+ *  
+ *  \details This function configures the encoder object to the value of the dome mechanical system.
+ */
+void debugMode(int argc, char *argv[]);
 
 //////////////////////////////////////////////////////////////////////////
 ///	Function Wraps-up to start/stop the encoder timer 
 ///	only used when simulating the Encoder
 ///	(to avoid to export too many data structures)
 //////////////////////////////////////////////////////////////////////////
-#ifdef ENCODER_SIMULATION
+//#ifdef ENCODER_SIMULATION
 	void startEncoderTimer();				//	Start the encoder simulation timer
 	void stopEncoderTimer();				//	Stop the encoder simulation timer
-#endif // ENCODER_SIMULATION
+//#endif // ENCODER_SIMULATION
 
 #endif
 

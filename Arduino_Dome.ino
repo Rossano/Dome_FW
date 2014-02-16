@@ -1,31 +1,31 @@
 //////////////////////////////////////////////////////////////////////////
-/// 
+///
 ///	Include Section
-/// 
+///
 //////////////////////////////////////////////////////////////////////////
 
 /// Include Nil RTOS
 #include <NilRTOS.h>
 
-/// 
+///
 ///	Project related included files
-/// 
+///
 #include "board.h"			//	Board related inclusions
 #include "encoder.h"		//	Encoder related inclusions
 #include "dome.h"			//	Dome control related inclusions
 #include "shell.h"			//	Shell related inclusions
 
-#undef MEMORY_CHECK
-#ifdef MEMORY_CHECK
-	#include "MemoryFree.h"
-#endif
+//#undef MEMORY_CHECK
+//#ifdef MEMORY_CHECK
+	//#include "MemoryFree.h"
+//#endif
 
 
-/// 
+///
 ///	Debug inclusions, use this to simulate the encoder with a timer
-///	
+///
 ///	NOT USED!
-/// 
+/////
 #undef DEBUG				//	this inclusions is not used
 #ifdef DEBUG
 	#include <NilTimer1.h>	//	NilRTOS Timer
@@ -49,33 +49,33 @@
 ///
 ///	This section allow to have visible the thread data structure
 ///	defined elsewhere
-/// 
+///
 //////////////////////////////////////////////////////////////////////////
 
-/// 
+///
 ///	Encoder Thread
-/// 
+///
 extern void EncoderThread(void * arg);
 extern NIL_WORKING_AREA(waEncoderThread, STACKSIZE);
-/// 
+///
 ///	Dome Control Thread
 ///
 extern void DomeThread(void * arg);
 extern NIL_WORKING_AREA(waDomeThread, STACKSIZE);
-/// 
+///
 ///	Shell Thread
-/// 
+///
 #ifdef USE_SHELL_THREAD
 	extern void ShellThread(void *arg);
 	extern NIL_WORKING_AREA(waShellThread, STACKSIZE);
 #endif // USE_SHELL_THREAD
 ///
 ///	Encoder Simulation (Debug) Thread
-/// 
-#if defined(ENCODER_SIMULATION)
+///
+//#if defined(ENCODER_SIMULATION)
 	extern void DebugThread(void * arg);
 	extern NIL_WORKING_AREA(waDebugThread, STACKSIZE);
-#endif // ENCODER_SIMULATION
+//#endif // ENCODER_SIMULATION
 
 //////////////////////////////////////////////////////////////////////////
 ///
@@ -85,9 +85,9 @@ extern NIL_WORKING_AREA(waDomeThread, STACKSIZE);
 
 NIL_THREADS_TABLE_BEGIN()
 ///	Encoder Simulation Thread
-#if defined(ENCODER_SIMULATION)
-	NIL_THREADS_TABLE_ENTRY("Debug", DebugThread, NULL, waDebugThread, sizeof(waDebugThread))		
-#endif // ENCODER_SIMULATION
+//#if defined(ENCODER_SIMULATION)
+	NIL_THREADS_TABLE_ENTRY("Debug", DebugThread, NULL, waDebugThread, sizeof(waDebugThread))
+//#endif // ENCODER_SIMULATION
 ///	Shell Thread
 #ifdef USE_SHELL_THREAD
 	NIL_THREADS_TABLE_ENTRY("Shell", ShellThread, NULL, waShellThread, sizeof(waShellThread))
@@ -105,7 +105,7 @@ NIL_THREADS_TABLE_END()
 ///
 //////////////////////////////////////////////////////////////////////////
 
-/// 
+///
 ///	Variables used for the shell code but defined elsewhere
 ///
 #ifndef USE_SHELL_THREAD
@@ -125,13 +125,13 @@ NIL_THREADS_TABLE_END()
 ///</summary>
 void setup()
 {
-	
+
 	//
 	//        Initialize the board, setting up all the I/O in a known state
 	//
-	
+
 	//        Initialize the USB link for PC communication
-	Serial.begin(BAUDRATE); 
+	Serial.begin(BAUDRATE);
 	//
 	//        Until the USB CDC is not connected to the PC the yellow LED on Arduino is
 	//        blinking, then it will be fix
@@ -143,7 +143,7 @@ void setup()
 		digitalWrite(SOL_LED, LOW);
 		delay(300);
 	}
-		
+
 	//        Highlight the LED in PWM mode to allow the hard fix the light level
 	analogWrite(SOL_LED, 32);
 	//        Write the prompt on serial link
@@ -162,8 +162,8 @@ void loop()
 	//
 	// Idle task, read the data from serial port only if NOT USED Shell Thread
 	//
-	#ifndef USE_SHELL_THREAD	
-		char ch;	
+	#ifndef USE_SHELL_THREAD
+		char ch;
 		//	Execute the USB-CDC task
 		CDC_Task();
 		//
@@ -175,7 +175,7 @@ void loop()
 				//	Only used for debugging
 				Serial.println("Received -> " + cmdString);
 			#endif // DEBUG
-		
+
 			char buffer[CMD_STRING_LEN];
 			//	Create the char buffer pointer for the shell
 			char *buf = (char *)&buffer;
@@ -188,7 +188,6 @@ void loop()
 			cmdString = "";
 			cmdReady = false;
 			inBufCount = 0;
-		}	
-	#endif // USE_SHELL_THREAD		
+		}
+	#endif // USE_SHELL_THREAD
 }
-	

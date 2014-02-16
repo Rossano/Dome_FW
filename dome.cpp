@@ -75,16 +75,28 @@ bool DomeClass::turnLeft()
 	if(state == NO_TURN) 
 	{
 		state = TURN_LEFT;								//	Change state to turning to the left		
-		#ifndef ENCODER_SIMULATION
+//		#ifndef ENCODER_SIMULATION
+		if (!encoderDebugMode)
+		{
+			//	FALSE True Encoder
+			avrPrintf("debug -> OFF\r\n");
 			digitalWrite(turnLeftPin, HIGH);			//	Activate motor only if real HW is present
-		#else
+		} 
+		else
+		{
+			//	TRUE Encoder Simulation
+			avrPrintf("debug -> ON\r\n");
 			avrPrintf("Start Turning LEFT\n");			//	If encoder is simulated tag a message to the serial port
 			startEncoderTimer();						//	Start the timer to simulate the Encoder
-		#endif
+		}
+			
+//		#else
+			
+//		#endif
 		
-		#ifdef DEBUG
-			avrPrintf("Exiting turning left function\n");
-		#endif // DEBUG
+		//#ifdef DEBUG
+			//avrPrintf("Exiting turning left function\n");
+		//#endif // DEBUG
 		return true;									//	Everything was fine thus return TRUE
 	}
 	return false;										//	Else retun FALSE
@@ -101,16 +113,26 @@ bool DomeClass::turnRight()
 	if(state == NO_TURN)
 	{
 		state = TURN_RIGHT;								//	Change state to turning on the right
-		#ifndef ENCODER_SIMULATION
+//		#ifndef ENCODER_SIMULATION
+		if (!encoderDebugMode)
+		{
+			//	FALSE Encoder Simulation
 			digitalWrite(turnRightPin, HIGH);			//	Activate motor only if real HW is present
-		#else
+		} 
+		else
+		{
+			//	TRUE Real Encoder
 			avrPrintf("Start turning RIGHT\n");			//	If encoder is simulated tag a message to the serial port
 			startEncoderTimer();						//	Start the timer to simulate the Encoder
-		#endif
+		}
+			
+		//#else
+			//
+		//#endif
 		
-		#ifdef DEBUG
-			avrPrintf("Exiting turning right function\n");
-		#endif // DEBUG
+		//#ifdef DEBUG
+			//avrPrintf("Exiting turning right function\n");
+		//#endif // DEBUG
 		return true;									//	Everything is fine thus return TRUE
 	}
 	return false;										//	Else return FALSE
@@ -124,12 +146,21 @@ void DomeClass::stop()
 {
 	//	If encoder is not simulated check on which direction the Dome is turning to deactivate
 	//	the right Arduino I/O
-	#ifndef ENCODER_SIMULATION
+	
+	//#ifndef ENCODER_SIMULATION
+	if(!encoderDebugMode)
+	{
+		//	TRUE Real Encoder
 		if(state == TURN_LEFT) digitalWrite(turnLeftPin, LOW);
 		else if (state == TURN_RIGHT) digitalWrite(turnRightPin, LOW);
-	#else
+	}		
+	//#else
+	else
+	{
+		//	FALSE Encoder Simulation
 		stopEncoderTimer();								//	Encoder simulated, simply stop the timer
-	#endif
+	}		
+	//#endif
 	
 	state = NO_TURN;									//	Set state to no turning
 }
@@ -281,6 +312,44 @@ void getState(int argc, char *argv[])
 		avrPrintf("\r\nget_state Error: no valid state\r\n");
 	}	
 }
+
+///**
+ //*  \brief Shell Command to configure the Dome in debug mode.
+ //*  Debug mode is when the encoder HW is not physically present and it is then
+ //*  simulated. No parameter returns the actual status, else it looks for ON/OFF to set clear the debug mode
+ //*  \param [in] argc int Number of command arguments
+ //*  \param [in] argv char[]* list of arguments
+ //*  \return void
+ //*  
+ //*  \details This function configures the encoder object to the value of the dome mechanical system.
+ //*/
+//void debugMode(int argc, char *argv[])
+//{
+	//(void)argv;
+	//if(argc > 1)
+	//{
+		//Usage("debug <ON/OFF>");
+		//avrPrintf("Error: debug\r\n");
+		//return;
+	//}
+	//else if (argc == 0)
+	//{
+		//if (encoderDebugMode) 
+		//{
+			//avrPrintf("debugMode: ON");
+		//}
+		//else
+		//{
+			//avrPrintf("debugMode: OFF");
+		//}				
+	//}
+	//else if (argc == 1)
+	//{		
+		//if (!strcmp(argv[0], "ON")) encoderDebugMode = TRUE;
+		//else if (!strcmp(argv[0], "OFF")) encoderDebugMode=FALSE;
+	//}
+	//avrPrintf("debug: OK\r\n");
+//}
 
 /**
  *  \brief Shell Command to configure the Dome mechanical gear.
