@@ -57,6 +57,10 @@ EncoderClass Encoder;						//	Encoder data structure
   *
  */
 bool encoderDebugMode = false;
+/* \brief Flag to indicate that encoder semaphore will be used, thus ISR will be used
+ *
+ */
+bool use_encoder_sem = false;
 
 
 #include "dome.h"						    //	Include the Dome module
@@ -358,7 +362,7 @@ void debugMode(int argc, char *argv[])
 	(void)argv;
 	if(argc > 1)
 	{
-		Usage("debug <ON/OFF>");
+		Usage("debug <ON/OFF/FULL>");
 		avrPrintf("Error: debug\r\n");
 		return;
 	}
@@ -366,7 +370,14 @@ void debugMode(int argc, char *argv[])
 	{
 		if (encoderDebugMode)
 		{
-			avrPrintf("debugMode: ON\r\n");
+			if (use_encoder_sem) 
+			{
+				avrPrintf("debugMode: FULL\r\n");
+			}
+			else 
+			{
+				avrPrintf("debugMode: ON\r\n");
+			}				
 		}
 		else
 		{
@@ -375,8 +386,21 @@ void debugMode(int argc, char *argv[])
 	}
 	else if (argc == 1)
 	{
-		if (!strcmp(argv[0], "ON")) encoderDebugMode = TRUE;
-		else if (!strcmp(argv[0], "OFF")) encoderDebugMode=FALSE;
+		if (!strcmp(argv[0], "ON"))
+		{
+			encoderDebugMode = TRUE;
+			use_encoder_sem = FALSE;
+		}			
+		else if (!strcmp(argv[0], "OFF")) 
+		{
+			encoderDebugMode=FALSE;
+			use_encoder_sem = FALSE;
+		}
+		else if(!strcmp(argv[0], "FULL"))
+		{
+			encoderDebugMode = TRUE;
+			use_encoder_sem = TRUE;
+		}			
 	}
 	avrPrintf("debug OK\r\n");
 }
@@ -441,7 +465,8 @@ NIL_WORKING_AREA(waDebugThread, 64);
 	#ifdef TIMER_DEBUG
 		avrPrintf("Starting Debug Timer");		///	Plot debug message if flag is active
 	#endif
-
+	uint8_t state = 0;
+	
 	/// Loop forever
 	while(TRUE)
 	{
@@ -449,8 +474,35 @@ NIL_WORKING_AREA(waDebugThread, 64);
 		#if 0
 		nilSemSignal(&DebugSem);				///	Signal the new pulse to the encoder unlocking a semaphore
 		#endif
-		nilSemSignal(&encoderSem);				///	Signal the new pulse to the encoder unlocking a semaphore
-
+		if (use_encoder_sem)
+		{
+			nilSemSignal(&encoderSem);				///	Signal the new pulse to the encoder unlocking a semaphore	
+		}
+		
+		switch (state)
+		{
+			case 0: digitalWrite(SimencoderA, LOW);
+					digitalWrite(SimencoderB, LOW);
+					break;
+			case 1: digitalWrite(SimencoderA, HIGH);
+					digitalWrite(SimencoderB, LOW);
+					break;
+			case 2: digitalWrite(SimencoderA, HIGH);
+					digitalWrite(SimencoderB, HIGH);
+					break;
+			case 3: digitalWrite(SimencoderA, LOW);
+					digitalWrite(SimencoderB, HIGH);
+					break;
+		}		
+		if (state == 3)
+		{
+			state = 0;
+		}
+		else
+		{
+			state++;
+		}			
+		
 		#ifdef TIMER_DEBUG
 			avrPrintf("Tick");
 			avrPrintf("Waiting Free");

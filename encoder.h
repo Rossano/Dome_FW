@@ -106,6 +106,7 @@ class EncoderClass
 extern EncoderClass Encoder;
 
 extern bool encoderDebugMode;
+extern bool use_encoder_sem;
 
 //////////////////////////////////////////////////////////////////////////
 ///

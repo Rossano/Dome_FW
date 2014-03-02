@@ -38,7 +38,7 @@
 #define SHELL_MAX_LINE_LENGTH       32					///	Shell input buffer length
 #define SHELL_MAX_ARGUMENTS         4					///	Shell MAX number of arguments
 #define SHELL_PROMPT                "AVR> "				///	Shell prompt
-#define FW_VERSION                  "0.6.0"				///	Firmware Revision
+#define FW_VERSION                  "0.6.3"				///	Firmware Revision
 #define OS_VERSION                  NIL_KERNEL_VERSION	///	OS type and revision
 #define CR							"\r\n"				///	Shell EOL characters
 #define CMD_STRING_LEN				32					///	Command String Length
@@ -72,6 +72,31 @@ extern void Stop(int argc, char *argv[]);						/// Stop turning the Dome
 extern void vPwmStop(int argc, char *argv[]);                     //        Stop a PWM
 extern void vPwmSet(int argc, char *argv[]);                      //        Set the level of a PWM
 */
+
+/** \brief
+ *
+ * \param argc intargc int Number of command arguments
+ * \param argv[] char* list of arguments
+ * \return void
+ *
+ */
+void SendACK(int argc, char *argv[]);                                           ///  Send back a ACK to the PC
+/** \brief
+ *
+ * \param argc int Number of command arguments
+ * \param argv[] char* list of arguments
+ * \return void
+ *
+ */
+void CmdInfo(int argc, char *argv[]);                                           ///  Get back the info about the FW revision
+/** \brief
+ *
+ * \param argc int Number of command arguments
+ * \param argv[] char* list of arguments
+ * \return void
+ *
+ */
+void CmdSystime(int argc, char *argv[]);                                        ///  Command system time (not implemented)
 
 /** \brief Shell Command Data type:
  *
@@ -111,7 +136,7 @@ typedef struct
 static ShellCommand_t ShellCommands[] =
 {
 	{
-		"get_ACK",   SendACK
+		"get_ACK", SendACK
 	},
 	{
 		"pos", getPosition
@@ -169,31 +194,7 @@ void avrPrintf(const uint16_t val);
 void avrPrintf(const uint32_t val);                                             ///  Send a long on serial port
 void avrPrintf(const double val);                                               ///  Send a double on serial port
 void ShellTask(void *p, char *line);                                            ///  Shell Task
-void CDC_Task();                                                                ///  USB CDC task
-/** \brief
- *
- * \param argc intargc int Number of command arguments
- * \param argv[] char* list of arguments
- * \return void
- *
- */
-void SendACK(int argc, char *argv[]);                                           ///  Send back a ACK to the PC
-/** \brief
- *
- * \param argc int Number of command arguments
- * \param argv[] char* list of arguments
- * \return void
- *
- */
-void CmdInfo(int argc, char *argv[]);                                           ///  Get back the info about the FW revision
-/** \brief
- *
- * \param argc int Number of command arguments
- * \param argv[] char* list of arguments
- * \return void
- *
- */
-void CmdSystime(int argc, char *argv[]);                                        ///  Command system time (not implemented)
+void CDC_Task();                                                                ///  USB CDC tas
 
 
 #endif

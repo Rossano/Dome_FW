@@ -46,4 +46,12 @@ const uint8_t encoderHome = 0;
 const uint8_t turnLeftPin = 8;
 const uint8_t turnRightPin = 9;
 
+/** \brief Encoder Generator (Dome)  Definition
+ *
+ * \param encoderA uint8_t Signal  on PIN4
+ * \param encoderB uint8_t Signal  on PIN5
+ *
+ */
+const uint8_t SimencoderA = 4;
+const uint8_t SimencoderB = 5;
 #endif /* BOARD_H_ */
