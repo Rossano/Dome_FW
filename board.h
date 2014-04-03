@@ -54,4 +54,5 @@ const uint8_t turnRightPin = 9;
  */
 const uint8_t SimencoderA = 4;
 const uint8_t SimencoderB = 5;
+
 #endif /* BOARD_H_ */

@@ -16,6 +16,7 @@
 #include "board.h"			//	Board definition inclusion
 #include "encoder.h"		//	Encoder Code inclusion
 #include "shell.h"			//	Shell Code inclusion
+#include "dome.h"			//	Dome Code inclusion
 
 //#undef MEMORY_CHECK
 //#ifdef MEMORY_CHECK
@@ -478,7 +479,9 @@ NIL_WORKING_AREA(waDebugThread, 64);
 		{
 			nilSemSignal(&encoderSem);				///	Signal the new pulse to the encoder unlocking a semaphore	
 		}
-		
+		/*
+			Toggle the output on Encoder simulation I/O
+		*/
 		switch (state)
 		{
 			case 0: digitalWrite(SimencoderA, LOW);
@@ -493,15 +496,36 @@ NIL_WORKING_AREA(waDebugThread, 64);
 			case 3: digitalWrite(SimencoderA, LOW);
 					digitalWrite(SimencoderB, HIGH);
 					break;
-		}		
-		if (state == 3)
-		{
-			state = 0;
 		}
+		/*
+			Update the state
+		*/
+		if (Dome.getState() == TURN_RIGHT)
+		{
+			if (state == 3)
+			{
+				state = 0;
+			}
+			else
+			{
+				state++;
+			}
+		}		
+		else if (Dome.getState() == TURN_LEFT)
+		{
+			if (state == 0)
+			{
+				state = 3;
+			}
+			else
+			{
+				state--;
+			}
+		}	
 		else
 		{
-			state++;
-		}			
+			avrPrintf("Error: Incorrect turning state in Encoder Debug Thread\r\n");
+		}		
 		
 		#ifdef TIMER_DEBUG
 			avrPrintf("Tick");
