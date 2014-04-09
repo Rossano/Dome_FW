@@ -143,7 +143,9 @@ void setup()
 		digitalWrite(SOL_LED, LOW);
 		delay(300);
 	}
-
+        pinMode(SimencoderA, OUTPUT);
+        pinMode(SimencoderB, OUTPUT);
+        
 	//        Highlight the LED in PWM mode to allow the hard fix the light level
 	analogWrite(SOL_LED, 32);
 	//        Write the prompt on serial link

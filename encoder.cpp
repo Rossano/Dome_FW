@@ -562,21 +562,21 @@ void encoderISR()
 		if(digitalRead(encoderA) == digitalRead(encoderB))
 		{
 			/// Increment encoder under lock block
-			nilSysLockFromIsr();
+			nilSysLockFromISR();
 			//if(Encoder.Position() == MAX_COUNT) Encoder.SetPosition(0);
 			//else Encoder.SetPosition(Encoder.Position() + 1);
 			Encoder++;
-			nilSysUnlockFromIsr();
+			nilSysUnlockFromISR();
 		}
 		///	A=H and B=L Dome is turning anticlockwise (on the LEFT)
 		else
 		{
 			/// Decrement encoder under lock block
-			nilSysLockFromIsr();
+			nilSysLockFromISR();
 			//if(Encoder.Position() == 0) Encoder.SetPosition(MAX_COUNT);
 			//else Encoder.SetPosition(Encoder.Position() -1);
 			Encoder--;
-			nilSysUnlockFromIsr();
+			nilSysUnlockFromISR();
 		}
 	#elif (ENCODER_IMPLEMENTATION == A_AND_B)
 
@@ -600,9 +600,9 @@ void encoderISR()
 void homeISR()
 {
 	NIL_IRQ_PROLOGUE();									///	Requested by RTOS
-	nilSysLockFromIsr()	;
+	nilSysLockFromISR()	;
 	Encoder.SetPosition(0);								///	Set the position to 0 under lock block
-	nilSysUnlockFromIsr();
+	nilSysUnlockFromISR();
 	NIL_IRQ_EPILOGUE();									///	Requested by RTOS
 }
 
