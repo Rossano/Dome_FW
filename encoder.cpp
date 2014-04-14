@@ -1,16 +1,13 @@
 /**
- *  \file encoder.cpp
- *  \author Rossano Pantaleoni
- *  \version 0.6.1.2
- *  \date 9 Apr 2014
+ *  \file encoder.h
  *  \brief Arduino Encoder code
  *  This file implements the interface of an Arduino control of an incremental encoder
  */
 
 //////////////////////////////////////////////////////////////////////////
-//
-//	Include Section
-//
+///
+///	Include Section
+///
 //////////////////////////////////////////////////////////////////////////
 
 #include <NilRTOS.h>		//	RTOS inclusion
@@ -27,16 +24,11 @@
 //#endif
 
 //////////////////////////////////////////////////////////////////////////
-//
-//	Defines Section
-//
+///
+///	Defines Section
+///
 //////////////////////////////////////////////////////////////////////////
-/** \brief Constant Definition
- *
- *  \def DEBUG: debug flag (undefined by default)
- *  \def DEBUG_TIMER_INVERVAL_US = 29710, debug timer interval in us
- *  \def TIMER_DEBUG: yet another timer debug flag (undefined by default)
- */
+
 #undef DEBUG								//	DEBUG FLAG
 //#define ENCODER_SIMULATION					//	FLAG to simulate the Encoder
 #define DEBUG_TIMER_INTERVAL_US		29170 	//	Simulate Encoder time (1400 rpm) = 1400/60/80/100 (old 429) x 10 don't know why
@@ -51,12 +43,11 @@
 //#endif // ENCODER_SIMULATION
 
 //////////////////////////////////////////////////////////////////////////
-//
-//	Variable Section
-//
+///
+///	Variable Section
+///
 //////////////////////////////////////////////////////////////////////////
 
-/// \def Encoder
 /// \brief Encoder class object
 /// This variable is the entry point for all the incremental encoder management
 ///
@@ -74,40 +65,39 @@ bool use_encoder_sem = false;
 
 
 #include "dome.h"						    //	Include the Dome module
-/** \def DebugSem
- *  \brief Semaphore to synchronize the encoder simulation for debug
+/** \brief Semaphore to synchronize the encoder simulation for debug
  *
- *  \detail If Encoder simulation define a semaphore to synchronize the Encoder thread
- *  and include the Dome data structure for the turning direction
- *  Else just declare a semaphore to synchronize Encoder thread
+ * If Encoder simulation define a semaphore to synchronize the Encoder thread
+ * and include the Dome data structure for the turning direction
+ * Else just declare a semaphore to synchronize Encoder thread
  *
  */
 SEMAPHORE_DECL(DebugSem, 0);			//	Semaphore indicating Encoder thread that a new pulse arrived
 extern DomeClass Dome;
 
-/** \def encoderSem
- *  \brief Semaphore indicating Encoder thread of a new pulse
+/** \brief Semaphore indicating Encoder thread of a new pulse
  *
  */
 SEMAPHORE_DECL(encoderSem, 0);			//	Semaphore indicating Encoder thread of a new pulse
 
 
-/** \def EncoderCountSem
- *  \brief Semaphore used to synchronized the counting of slewing steps
+/** \brief Semaphore used to synchronized the counting of slewing steps
  *
- *  \param EncoderCountSem semaphore name
- *  \param 0 semaphore initial count (free)
+ * \param EncoderCountSem semaphore name
+ * \param 0 semaphore initial count (free)
  *
  */
 static SEMAPHORE_DECL(EncoderCountSem, 0);	//	Semaphore used when counting fixed # of steps
 
+bool isConnected = false;
+
 //////////////////////////////////////////////////////////////////////////
-//
-//	Code Section
-//
+///
+///	Code Section
+///
 //////////////////////////////////////////////////////////////////////////
 
-/* \brief printf wrap-up function to print a string on a terminal
+/** \brief printf wrap-up function to print a string on a terminal
  *
  * \param str const char* string to be displayed
  * \return none
@@ -116,7 +106,7 @@ static SEMAPHORE_DECL(EncoderCountSem, 0);	//	Semaphore used when counting fixed
 extern void avrPrintf(const char * str);	//	function to print to terminal a string
 
 
-/* \brief Default Constructor
+/** \brief Default Constructor
  */
 EncoderClass::EncoderClass()
 {
@@ -124,7 +114,7 @@ EncoderClass::EncoderClass()
 	init();
 }
 
-/* \brief Constructor Initializing the Encoder position.
+/** \brief Constructor Initializing the Encoder position.
  *
  * \param pos uint32_t Initial position of the encoder
  *
@@ -135,7 +125,7 @@ EncoderClass::EncoderClass(uint32_t pos)
 	init();
 }
 
-/* \brief Initialize the Encoder HW and EncoderClass data structure.
+/** \brief Initialize the Encoder HW and EncoderClass data structure.
  *
  * \return void
  *
@@ -163,8 +153,8 @@ void EncoderClass::init()
 	digitalWrite(encoderB, HIGH);
 	digitalWrite(encoderHome, HIGH);
 
-    //	Configure IRQ on external pins
-	attachInterrupt(IRQ_PINA, encoderISR, RISING);
+    ///	Configure IRQ on external pins
+	attachInterrupt(IRQ_PINA, encoderISR, CHANGE);
 	#if (ENCODER_IMPLEMENTATION == A_AND_B)
 	//	Configure interrupt on B port only if it is used
 		attachInterrupt(IRQ_PINB, encoderISR, RISING);
@@ -172,7 +162,7 @@ void EncoderClass::init()
 	attachInterrupt(IRQ_HOME, homeISR, RISING);
 }
 
-/* \brief Method to read the Encoder position
+/** \brief Method to read the Encoder position
  *
  * \return uint32_t Encoder actual absolute position
  *
@@ -182,7 +172,7 @@ uint32_t EncoderClass::Position()
 	return _position;
 }
 
-/* \brief Method to Set the Encoder position
+/** \brief Method to Set the Encoder position
  *
  * \param pos uint32_t New position of the encoder
  * \return void
@@ -196,7 +186,7 @@ void EncoderClass::SetPosition(uint32_t pos)
 	nilSysUnlock();
 }
 
-/* \brief Method to read the Encoder A signal state
+/** \brief Method to read the Encoder A signal state
  *
  * \return bool Encoder A channel state
  *
@@ -207,7 +197,7 @@ bool EncoderClass::channelA()
 }
 
 
-/* \brief Method to read the Encoder B signal state
+/** \brief Method to read the Encoder B signal state
  *
  * \return bool Encoder B channel state
  *
@@ -217,7 +207,7 @@ bool EncoderClass::channelB()
 	return digitalRead(encoderB);
 }
 
-/* \brief Method to read the HOME signal state
+/** \brief Method to read the HOME signal state
  *
  * \return bool HOME signal state
  *
@@ -227,11 +217,11 @@ bool EncoderClass::channelHome()
 	return digitalRead(encoderHome);
 }
 
-//
-//	Definition of operators ++ & -- to change the Encoder position in a more elegant way
-//
+///
+///	Definition of operators ++ & -- to change the Encoder position in a more elegant way
+///
 
-/* \brief Operator ++
+/** \brief Operator ++
  *
  * \return EncoderClass& EncoderClass::operator New EncoderClass data structure
  *
@@ -241,7 +231,7 @@ EncoderClass& EncoderClass::operator ++()
 	return *this;
 }
 
-/* \brief Operator ++
+/** \brief Operator ++
  *
  * \param int
  * \return EncoderClass EncoderClass::operator EncoderClass incremented
@@ -263,7 +253,7 @@ EncoderClass EncoderClass::operator ++(int)
 	}
 }
 
-/* \brief Operator --
+/** \brief Operator --
  *
  * \return EncoderClass& EncoderClass::operator New EncoderClass data structure
  *
@@ -273,7 +263,7 @@ EncoderClass& EncoderClass::operator --()
 	return *this;
 }
 
-/* \brief Operator --
+/** \brief Operator --
  *
  * \param int
  * \return EncoderClass EncoderClass::operator EncoderClass decremented
@@ -307,18 +297,18 @@ EncoderClass EncoderClass::operator --(int)
 void getPosition(int argc, char *argv[])
 {
 	(void) argv;
-	// If there are arguments display and error message
+	/// If there are arguments display and error message
 	if(argc > 0)
 	{
 		Usage("pos");
 		return;
 	}
-	char buf[10];				        //	Buffer to store the ASCII conversion of the position
-	// Else display a string stating that it is not implemented
-	avrPrintf("Position = ");			//	Tag for the PC application
-	//
-	// If Position has to be returned as angle carry out he value and send it to the serial port
-	//
+	char buf[10];				        ///	Buffer to store the ASCII conversion of the position
+	/// Else display a string stating that it is not implemented
+	avrPrintf("Position = ");			///	Tag for the PC application
+	///
+	/// If Position has to be returned as angle carry out he value and send it to the serial port
+	///
 	#if (RETURN_ANGLE == 1)
 	//	Carry out the angle
 	double angle = 360 * ((double)Encoder.Position() / (double)Encoder.encoderMaxCount);
@@ -329,17 +319,19 @@ void getPosition(int argc, char *argv[])
 		avrPrintf(ltoa(Encoder.Position(), buf, 10));
 	#endif // DEBUG
 	#else
-		avrPrintf(ltoa(Encoder.Position(), buf, 10));	//	Send the position as circular buffer counter
+		avrPrintf(ltoa(Encoder.Position(), buf, 10));	///	Send the position as circular buffer counter
 	#endif
-	avrPrintf(" pos OK\r\n");							//	Tag the PC application  that all is OK
+	avrPrintf(" pos OK\r\n");							///	Tag the PC application  that all is OK
 }
 
-/* \brief Shell command to set the current dome position
+/** \brief Shell command to set the current dome position
  *
  * \param argc int Number of arguments
  * \param argv[] char* List of arguments
  * \return void
  *
+ * \details This command checks first for the correct number of parameters
+ * then it updates the dome current position
  */
 void setPosition(int argc, char *argv[])
 {
@@ -352,13 +344,13 @@ void setPosition(int argc, char *argv[])
 		avrPrintf(CR);
 		return;
 	}
-	//	Set the new position
+	///	Set the new position
 	Encoder.SetPosition(atoi(argv[1]));
-	//	Display the return message
+	///	Display the return message
 	avrPrintf("\r\nset_po OK\r\n");
 }
 
-/*
+/**
  *  \brief Shell Command to configure the Dome in debug mode.
  *  Debug mode is when the encoder HW is not physically present and it is then
  *  simulated. No parameter returns the actual status, else it looks for ON/OFF to set clear the debug mode
@@ -381,14 +373,14 @@ void debugMode(int argc, char *argv[])
 	{
 		if (encoderDebugMode)
 		{
-			if (use_encoder_sem)
+			if (use_encoder_sem) 
 			{
 				avrPrintf("debugMode: FULL\r\n");
 			}
-			else
+			else 
 			{
 				avrPrintf("debugMode: ON\r\n");
-			}
+			}				
 		}
 		else
 		{
@@ -401,8 +393,8 @@ void debugMode(int argc, char *argv[])
 		{
 			encoderDebugMode = TRUE;
 			use_encoder_sem = FALSE;
-		}
-		else if (!strcmp(argv[0], "OFF"))
+		}			
+		else if (!strcmp(argv[0], "OFF")) 
 		{
 			encoderDebugMode=FALSE;
 			use_encoder_sem = FALSE;
@@ -411,18 +403,19 @@ void debugMode(int argc, char *argv[])
 		{
 			encoderDebugMode = TRUE;
 			use_encoder_sem = TRUE;
-		}
+		}			
 	}
 	avrPrintf("debug OK\r\n");
 }
 
 
 
-/*
+/**
  *  \brief Function Wrap up to start the RTOS timer
  *
  *  \return void
  *
+ *  \details Function Wrap up to easily start the NilRTOS timer.
  */
 void startEncoderTimer()
 {
@@ -433,11 +426,12 @@ void startEncoderTimer()
 	nilTimer1Start(DEBUG_TIMER_INTERVAL_US);
 }
 
-/*
+/**
  *  \brief Function Wrap up to stop the RTOS timer
  *
  *  \return void
  *
+ *  \details Function wrap-up to easily stop the NilRTOS timer
  */
 void stopEncoderTimer()
 {
@@ -459,7 +453,7 @@ void stopEncoderTimer()
  */
 NIL_WORKING_AREA(waDebugThread, 64);
 
-/** \fn Debug Thread
+/**
  *  \brief Encoder Debug Thread
  *
  *  \param [in] DebugThread thread code function
@@ -472,20 +466,20 @@ NIL_WORKING_AREA(waDebugThread, 64);
  NIL_THREAD(DebugThread, arg)
 {
 	#ifdef TIMER_DEBUG
-		avrPrintf("Starting Debug Timer");		//	Plot debug message if flag is active
+		avrPrintf("Starting Debug Timer");		///	Plot debug message if flag is active
 	#endif
 	uint8_t state = 0;
-
+	
 	/// Loop forever
 	while(TRUE)
 	{
-		nilTimer1Wait();						//	Wait a new pulse from a timer
+		nilTimer1Wait();						///	Wait a new pulse from a timer
 		#if 0
-		nilSemSignal(&DebugSem);				//	Signal the new pulse to the encoder unlocking a semaphore
+		nilSemSignal(&DebugSem);				///	Signal the new pulse to the encoder unlocking a semaphore
 		#endif
 		if (use_encoder_sem)
 		{
-			nilSemSignal(&encoderSem);				//	Signal the new pulse to the encoder unlocking a semaphore
+			nilSemSignal(&encoderSem);				///	Signal the new pulse to the encoder unlocking a semaphore	
 		}
 		/*
 			Toggle the output on Encoder simulation I/O
@@ -518,7 +512,7 @@ NIL_WORKING_AREA(waDebugThread, 64);
 			{
 				state++;
 			}
-		}
+		}		
 		else if (Dome.getState() == TURN_LEFT)
 		{
 			if (state == 0)
@@ -529,84 +523,94 @@ NIL_WORKING_AREA(waDebugThread, 64);
 			{
 				state--;
 			}
-		}
+		}	
 		else
 		{
 			avrPrintf("Error: Incorrect turning state in Encoder Debug Thread\r\n");
-		}
-
+		}		
+		
 		#ifdef TIMER_DEBUG
 			avrPrintf("Tick");
 			avrPrintf("Waiting Free");
 		#endif // TIMER_DEBUG
-		// This code is to unlock a counting semaphore to slew a given # of steps
-		if (Encoder.MultiActivate)				//	Unlock a semaphore used to count a given # of pulse
+		/// This code is to unlock a counting semaphore to slew a given # of steps
+		if (Encoder.MultiActivate)				///	Unlock a semaphore used to count a given # of pulse
 		{
 			nilSemSignal(&EncoderCountSem);
 		}
 	}
 }
 
-
-/* \brief If Encoder is not simulated, the pulse management is done via
+/** \brief If Encoder is not simulated, the pulse management is done via
  * External interrupt.
  * For this reason ISR are herewith defined
  *
  */
 
-/* \brief Code for the Encoder External Interrupt ISR.
+/** \brief Code for the Encoder External Interrupt ISR.
  *
  * \return void
  *
+ * \details The code is triggered when there is an external event on the Encoder input ports
+ * It checks the status of the encoder port A, B and Home to increment the encoder
+ * absolute position.
  */
 void encoderISR()
 {
-	NIL_IRQ_PROLOGUE();									//	Required by RTOS
+	NIL_IRQ_PROLOGUE();		
+        if (isConnected)
+        {
+          avrPrintf("Entering ISR\r\n");
+        }							///	Required by RTOS
 	#if (ENCODER_IMPLEMENTATION == A_ONLY)
-		//	If A=H and B=H  Dome is turning clockwise (on the RIGHT)
+		///	If A=H and B=H  Dome is turning clockwise (on the RIGHT)
 		if(digitalRead(encoderA) == digitalRead(encoderB))
 		{
-			// Increment encoder under lock block
+			/// Increment encoder under lock block
 			nilSysLockFromISR();
 			//if(Encoder.Position() == MAX_COUNT) Encoder.SetPosition(0);
 			//else Encoder.SetPosition(Encoder.Position() + 1);
 			Encoder++;
 			nilSysUnlockFromISR();
+                        if (isConnected) avrPrintf("Encoder++\r\n");
 		}
-		//	A=H and B=L Dome is turning anticlockwise (on the LEFT)
+		///	A=H and B=L Dome is turning anticlockwise (on the LEFT)
 		else
 		{
-			// Decrement encoder under lock block
+			/// Decrement encoder under lock block
 			nilSysLockFromISR();
 			//if(Encoder.Position() == 0) Encoder.SetPosition(MAX_COUNT);
 			//else Encoder.SetPosition(Encoder.Position() -1);
 			Encoder--;
 			nilSysUnlockFromISR();
+                        if (isConnected) avrPrintf("Encoder--\r\n");
 		}
 	#elif (ENCODER_IMPLEMENTATION == A_AND_B)
 
 	#endif // ENCODER_IMPLEMENTATION
 
-	nilSemSignalI(&encoderSem);							//	Release the encoder semaphore
-	if (Encoder.MultiActivate)							//	If command asked to count a #
-	{													//	of pulses release the couting semaphore
+	nilSemSignalI(&encoderSem);							///	Release the encoder semaphore
+	if (Encoder.MultiActivate)							///	If command asked to count a #
+	{													///	of pulses release the couting semaphore
 		nilSemSignalI(&EncoderCountSem);
 	}
-	NIL_IRQ_EPILOGUE();									//	Requested by RTOS
+	NIL_IRQ_EPILOGUE();									///	Requested by RTOS
 }
 
-/* \brief Code for the Home Interrupt ISR.
+/** \brief Code for the Home Interrupt ISR.
  *
  * \return void
  *
+ * \details The code is triggered when there is an external event on the Home input ports
+ * It resets the increment the encoder position to 0
  */
 void homeISR()
 {
-	NIL_IRQ_PROLOGUE();									//	Requested by RTOS
+	NIL_IRQ_PROLOGUE();									///	Requested by RTOS
 	nilSysLockFromISR()	;
-	Encoder.SetPosition(0);								//	Set the position to 0 under lock block
+	Encoder.SetPosition(0);								///	Set the position to 0 under lock block
 	nilSysUnlockFromISR();
-	NIL_IRQ_EPILOGUE();									//	Requested by RTOS
+	NIL_IRQ_EPILOGUE();									///	Requested by RTOS
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -623,7 +627,7 @@ void homeISR()
  */
 NIL_WORKING_AREA(waEncoderThread, STACKSIZE);
 
-/** \fn Encoder Thread
+/**
  *  \brief Encoder Thread
  *
  *  \param [in] EncoderThread Encoder Thread code function
@@ -642,7 +646,7 @@ NIL_THREAD(EncoderThread, arg)
 
 	while (TRUE)
 	{
-	    // Do something only if the dome is slewing.
+	    /// Do something only if the dome is slewing.
 		if (Dome.getState() != NO_TURN)
 		{
 			if (encoderDebugMode)
@@ -651,20 +655,20 @@ NIL_THREAD(EncoderThread, arg)
 					avrPrintf("Awaiting freeing semaphore\r\n");
 				#endif // DEBUG
 				#if 0
-				nilSemWait(&DebugSem);				//	Await a new event on the Debug semaphore
+				nilSemWait(&DebugSem);				///	Await a new event on the Debug semaphore
 				#endif
-				nilSemWait(&encoderSem);			//	Await a new event on the Debug semaphore
-				// To check the state ensure that no concurent process are changing it during the
-				// processing, thus lock the scheduler.
+				nilSemWait(&encoderSem);			///	Await a new event on the Debug semaphore
+				/// To check the state ensure that no concurent process are changing it during the
+				/// processing, thus lock the scheduler.
 				nilSysLock();
 
 				#ifdef DEBUG
-					avrPrintf("Tick\n");			//	Send a tag to the PC application
+					avrPrintf("Tick\n");			///	Send a tag to the PC application
 				#endif
-				//
-				//	In simulated conditions, the Dome turning state information are store by the Dome data structure
-				//	Therefore it used to increment/decrement the Encoder position
-				//
+				///
+				///	In simulated conditions, the Dome turning state information are store by the Dome data structure
+				///	Therefore it used to increment/decrement the Encoder position
+				///
 				if(Dome.getState() == TURN_RIGHT)
 				{
 					//if(Encoder.Position() == MAX_COUNT-1) Encoder.SetPosition(0);
@@ -679,9 +683,9 @@ NIL_THREAD(EncoderThread, arg)
 				}
 				else
 				{
-					avrPrintf("It shouldn't be here\r\n");  //  Acknoledge the user of a bad condition
+					avrPrintf("It shouldn't be here\r\n");  ///  Acknoledge the user of a bad condition
 				}
-				// Release the scheduler
+				/// Release the scheduler
 				nilSysUnlock();
 			}
 			//#else
@@ -689,21 +693,21 @@ NIL_THREAD(EncoderThread, arg)
 			{
 				//avrPrintf("No debug branch :o(\r\n");
 				//	Encoder HW is available
-				nilSemWait(&encoderSem);			//	Encoder position is consumed elsewhere so here
-			}										//	just awaits the encoder pulse to send the new position
+				nilSemWait(&encoderSem);			///	Encoder position is consumed elsewhere so here
+			}										///	just awaits the encoder pulse to send the new position
 			if (++count == 100)
 			{
 				char buf[10];
-				avrPrintf("Position= ");			//	Tag for the PC application
-				//	If the position has to be reported as angle
+				avrPrintf("Position= ");			///	Tag for the PC application
+				///	If the position has to be reported as angle
 				#if (RETURN_ANGLE == 1)
-				//	Carry out the angle
+				///	Carry out the angle
 				double angle = (360 * (double)Encoder.Position()) / 16.0;//(double)ENCODER_RESOLUTION; //Encoder.encoderMaxCount);
 				avrPrintf(angle);					//	Send the angle to the serial port
 				avrPrintf(CR);
 				#else
-				//	Position is sent as circular buffer counter
-				avrPrintf(ltoa(Encoder.Position(), buf, 10));	//	Send the angle position counter on serial port
+				///	Position is sent as circular buffer counter
+				avrPrintf(ltoa(Encoder.Position(), buf, 10));	///	Send the angle position counter on serial port
 				avrPrintf(CR);
 				#endif
 			}

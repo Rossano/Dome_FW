@@ -1,15 +1,15 @@
 //////////////////////////////////////////////////////////////////////////
-///
-///	Include Section
-///
+//
+//	Include Section
+//
 //////////////////////////////////////////////////////////////////////////
 
-/// Include Nil RTOS
+// Include Nil RTOS
 #include <NilRTOS.h>
 
-///
-///	Project related included files
-///
+//
+//	Project related included files
+//
 #include "board.h"			//	Board related inclusions
 #include "encoder.h"		//	Encoder related inclusions
 #include "dome.h"			//	Dome control related inclusions
@@ -21,10 +21,10 @@
 //#endif
 
 
-///
-///	Debug inclusions, use this to simulate the encoder with a timer
-///
-///	NOT USED!
+//
+//	Debug inclusions, use this to simulate the encoder with a timer
+//
+//	NOT USED!
 /////
 #undef DEBUG				//	this inclusions is not used
 #ifdef DEBUG
@@ -33,81 +33,81 @@
 #endif // DEBUG
 
 //////////////////////////////////////////////////////////////////////////
-///
-///	Defines Section
-///
+//
+//	Defines Section
+//
 //////////////////////////////////////////////////////////////////////////
 
 #define STACKSIZE	64			//	Thread stack size
 #define BAUDRATE	57600		//	Baudrate value
 
 //////////////////////////////////////////////////////////////////////////
-///
-///	Thread Section
-///
+//
+//	Thread Section
+//
 //////////////////////////////////////////////////////////////////////////
-///
-///	This section allow to have visible the thread data structure
-///	defined elsewhere
-///
+//
+//	This section allow to have visible the thread data structure
+//	defined elsewhere
+//
 //////////////////////////////////////////////////////////////////////////
 
-///
-///	Encoder Thread
-///
+//
+//	Encoder Thread
+//
 extern void EncoderThread(void * arg);
 extern NIL_WORKING_AREA(waEncoderThread, STACKSIZE);
-///
-///	Dome Control Thread
-///
+//
+//	Dome Control Thread
+//
 extern void DomeThread(void * arg);
 extern NIL_WORKING_AREA(waDomeThread, STACKSIZE);
-///
-///	Shell Thread
-///
+//
+//	Shell Thread
+//
 #ifdef USE_SHELL_THREAD
 	extern void ShellThread(void *arg);
 	extern NIL_WORKING_AREA(waShellThread, STACKSIZE);
 #endif // USE_SHELL_THREAD
-///
-///	Encoder Simulation (Debug) Thread
-///
+//
+//	Encoder Simulation (Debug) Thread
+//
 //#if defined(ENCODER_SIMULATION)
 	extern void DebugThread(void * arg);
 	extern NIL_WORKING_AREA(waDebugThread, STACKSIZE);
 //#endif // ENCODER_SIMULATION
 
 //////////////////////////////////////////////////////////////////////////
-///
-///	Thread Table Definition Section
-///
+//
+//	Thread Table Definition Section
+//
 //////////////////////////////////////////////////////////////////////////
 
 NIL_THREADS_TABLE_BEGIN()
-///	Encoder Simulation Thread
+//	Encoder Simulation Thread
 //#if defined(ENCODER_SIMULATION)
 	NIL_THREADS_TABLE_ENTRY("Debug", DebugThread, NULL, waDebugThread, sizeof(waDebugThread))
 //#endif // ENCODER_SIMULATION
-///	Shell Thread
+//	Shell Thread
 #ifdef USE_SHELL_THREAD
 	NIL_THREADS_TABLE_ENTRY("Shell", ShellThread, NULL, waShellThread, sizeof(waShellThread))
 #endif // USE_SHELL_THREAD
-///	Encoder Thread
+//	Encoder Thread
 NIL_THREADS_TABLE_ENTRY("Encoder", EncoderThread, NULL, waEncoderThread, sizeof(waEncoderThread))
-///	Dome Control Thread
+//	Dome Control Thread
 NIL_THREADS_TABLE_ENTRY("Dome", DomeThread, NULL, waDomeThread, sizeof(waDomeThread))
 
 NIL_THREADS_TABLE_END()
 
 //////////////////////////////////////////////////////////////////////////
-///
-///	Variable Section
-///
+//
+//	Variable Section
+//
 //////////////////////////////////////////////////////////////////////////
 
-///
-///	Variables used for the shell code but defined elsewhere
-///
+//
+//	Variables used for the shell code but defined elsewhere
+//
 #ifndef USE_SHELL_THREAD
 	extern String cmdString;					//        Line Command string buffer
 	extern boolean cmdReady;					//        Flag indicating that a command is ready
@@ -115,9 +115,9 @@ NIL_THREADS_TABLE_END()
 #endif
 
 //////////////////////////////////////////////////////////////////////////
-///
-///	Code Section
-///
+//
+//	Code Section
+//
 //////////////////////////////////////////////////////////////////////////
 
 ///<summary>
@@ -145,6 +145,7 @@ void setup()
 	}
         pinMode(SimencoderA, OUTPUT);
         pinMode(SimencoderB, OUTPUT);
+        isConnected = true;
         
 	//        Highlight the LED in PWM mode to allow the hard fix the light level
 	analogWrite(SOL_LED, 32);
