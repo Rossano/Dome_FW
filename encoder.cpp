@@ -146,15 +146,17 @@ void EncoderClass::init()
 	//
 	//	Initialize the Arduino pins for Encoder HW
 	//
-	pinMode(encoderA, INPUT_PULLUP);
-	pinMode(encoderB, INPUT_PULLUP);
+	/*pinMode(encoderA, INPUT_PULLUP);
+	pinMode(encoderB, INPUT_PULLUP);*/
+        pinMode(encoderA, INPUT);
+	pinMode(encoderB, INPUT);
 	pinMode(encoderHome, INPUT_PULLUP);
 	digitalWrite(encoderA, HIGH);
 	digitalWrite(encoderB, HIGH);
 	digitalWrite(encoderHome, HIGH);
 
     ///	Configure IRQ on external pins
-	attachInterrupt(IRQ_PINA, encoderISR, CHANGE);
+	attachInterrupt(IRQ_PINA, encoderISR, RISING);
 	#if (ENCODER_IMPLEMENTATION == A_AND_B)
 	//	Configure interrupt on B port only if it is used
 		attachInterrupt(IRQ_PINB, encoderISR, RISING);

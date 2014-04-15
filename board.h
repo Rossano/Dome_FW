@@ -33,8 +33,8 @@
  * \param encoderHome uint8_t Home signal on PIN0
  *
  */
-const uint8_t encoderA = 3;
-const uint8_t encoderB = 2;
+const uint8_t encoderA = 2;
+const uint8_t encoderB = 3;
 const uint8_t encoderHome = 0;
 
 /** \brief Motor Control (Dome) Arduino interface Definition
