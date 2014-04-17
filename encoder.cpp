@@ -148,7 +148,7 @@ void EncoderClass::init()
 	encoderResolution = ENCODER_RESOLUTION;			//	Init Encoder resolution
 	gearRatio = ENCODER_GEAR_RATIO;					//	Init system gear ratio
 	double foo = encoderResolution * gearRatio;
-	encoderMaxCount = 15;//(uint32_t)foo;
+	encoderMaxCount = MAX_COUNT;//15;//(uint32_t)foo;
 	#ifdef DEBUG
 		avrPrintf("Encoder MAX cnt -> ");
 		avrPrintf(encoderMaxCount);
@@ -158,9 +158,9 @@ void EncoderClass::init()
 	//
 	//	Initialize the Arduino pins for Encoder HW
 	//
-	pinMode(encoderA, INPUT_PULLUP);
-	pinMode(encoderB, INPUT_PULLUP);
-	pinMode(encoderHome, INPUT_PULLUP);
+	pinMode(encoderA, INPUT);
+	pinMode(encoderB, INPUT);
+	pinMode(encoderHome, INPUT);
 	digitalWrite(encoderA, HIGH);
 	digitalWrite(encoderB, HIGH);
 	digitalWrite(encoderHome, HIGH);
@@ -564,6 +564,8 @@ NIL_WORKING_AREA(waDebugThread, 64);
 void encoderISR()
 {
 	NIL_IRQ_PROLOGUE();									//	Required by RTOS
+/*        if (isConnected) avrPrintf("IRQ\t");
+        else avrPrintf("error IRQ\n");*/
 	#if (ENCODER_IMPLEMENTATION == A_ONLY)
 		//	If A=H and B=H  Dome is turning clockwise (on the RIGHT)
 		if(digitalRead(encoderA) == digitalRead(encoderB))
@@ -574,7 +576,10 @@ void encoderISR()
 			//else Encoder.SetPosition(Encoder.Position() + 1);
 			Encoder++;
 			nilSysUnlockFromISR();
-            if (isConnected) avrPrintf("++\t");
+/*            if (isConnected) 
+            {
+              avrPrintf("++\t");
+            }*/
 		}
 		//	A=H and B=L Dome is turning anticlockwise (on the LEFT)
 		else
@@ -585,7 +590,7 @@ void encoderISR()
 			//else Encoder.SetPosition(Encoder.Position() -1);
 			Encoder--;
 			nilSysUnlockFromISR();
-            if (isConnected) avrPrintf("--\t");
+           // if (isConnected) avrPrintf("--\t");
 		}
 	#elif (ENCODER_IMPLEMENTATION == A_AND_B)
 
@@ -670,26 +675,31 @@ NIL_THREAD(EncoderThread, arg)
 				#ifdef DEBUG
 					avrPrintf("Tick\n");			//	Send a tag to the PC application
 				#endif
-				//
-				//	In simulated conditions, the Dome turning state information are store by the Dome data structure
-				//	Therefore it used to increment/decrement the Encoder position
-				//
-				if(Dome.getState() == TURN_RIGHT)
-				{
-					//if(Encoder.Position() == MAX_COUNT-1) Encoder.SetPosition(0);
-					//else Encoder.SetPosition(Encoder.Position() + 1);
-					Encoder++;
-				}
-				else if(Dome.getState() == TURN_LEFT)
-				{
-					//if(Encoder.Position() == 0) Encoder.SetPosition(MAX_COUNT - 1);
-					//else Encoder.SetPosition(Encoder.Position() - 1);
-					Encoder--;
-				}
-				else
-				{
-					avrPrintf("It shouldn't be here\r\n");  //  Acknoledge the user of a bad condition
-				}
+                                
+                                if (use_encoder_sem)
+                                {
+                			//
+                			//	In simulated conditions, the Dome turning state information are store by the Dome data structure
+                			//	Therefore it used to increment/decrement the Encoder position
+                			//
+                			if(Dome.getState() == TURN_RIGHT)
+          				{
+          					//if(Encoder.Position() == MAX_COUNT-1) Encoder.SetPosition(0);
+          					//else Encoder.SetPosition(Encoder.Position() + 1);
+        					Encoder++;
+        				}
+        				else if(Dome.getState() == TURN_LEFT)
+        				{
+        					//if(Encoder.Position() == 0) Encoder.SetPosition(MAX_COUNT - 1);
+        					//else Encoder.SetPosition(Encoder.Position() - 1);
+        					Encoder--;
+        				}
+        				else
+        				{
+        					avrPrintf("It shouldn't be here\r\n");  //  Acknoledge the user of a bad condition
+        				}
+                                }
+                                
 				// Release the scheduler
 				nilSysUnlock();
 			}

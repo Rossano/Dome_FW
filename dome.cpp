@@ -379,6 +379,8 @@ void gearCfg(int argc, char *argv[])
 		avrPrintf(Encoder.encoderResolution);
 		avrPrintf("\nGear Ratio = ");
 		avrPrintf(int(Encoder.gearRatio));
+                avrPrintf("\nMax count = ");
+                avrPrintf(Encoder.encoderMaxCount);
 		avrPrintf(CR);
 		return;
 	}
