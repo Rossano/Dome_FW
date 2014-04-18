@@ -149,6 +149,7 @@ void EncoderClass::init()
 	gearRatio = ENCODER_GEAR_RATIO;					//	Init system gear ratio
 	double foo = encoderResolution * gearRatio;
 	encoderMaxCount = MAX_COUNT;//15;//(uint32_t)foo;
+        polarity = 0;
 	#ifdef DEBUG
 		avrPrintf("Encoder MAX cnt -> ");
 		avrPrintf(encoderMaxCount);
@@ -251,18 +252,37 @@ EncoderClass& EncoderClass::operator ++()
  */
 EncoderClass EncoderClass::operator ++(int)
 {
-	if(_position == encoderMaxCount)
-	{
+        if(!polarity)
+        {          
+  	  if(_position == encoderMaxCount)
+	  {
 		//	If max position is reached loop back to 0
 		_position = 0;
-		return 0;
-	}
-	else
-	{
+		//return 0;
+	  }
+	  else
+	  {
 		//	Else simply increase it
 		_position++;
-		return _position;
-	}
+		//return _position;
+	  }
+        }
+        else
+        {
+          	if(_position == 0)
+	        {
+		  //	If 0 is reached loop back to the MAX value
+		  _position = encoderMaxCount;
+		  //return encoderMaxCount;
+	        }
+	        else
+	        {
+		  //	else simply decrease
+		  _position--;
+		  //return _position;
+	        }
+        }
+        return _position;
 }
 
 /* \brief Operator --
@@ -283,18 +303,37 @@ EncoderClass& EncoderClass::operator --()
  */
 EncoderClass EncoderClass::operator --(int)
 {
-	if(_position == 0)
-	{
-		//	If 0 is reached loop back to the MAX value
-		_position = encoderMaxCount;
-		return encoderMaxCount;
-	}
-	else
-	{
-		//	else simply decrease
-		_position--;
-		return _position;
-	}
+        if(!polarity)
+        {
+        	if(_position == 0)
+	        {
+		      //	If 0 is reached loop back to the MAX value
+    		      _position = encoderMaxCount;
+        //		return encoderMaxCount;
+	        }
+        	else
+                {
+		      //	else simply decrease
+                      _position--;
+          //		return _position;
+	        }
+        }
+        else
+        {
+                if(_position == encoderMaxCount)
+	        {
+		      //	If max position is reached loop back to 0
+        		_position = 0;
+		//return 0;
+	        }
+        	else
+	        {
+		      //	Else simply increase it
+        	      _position++;
+  		//return _position;
+        	}        
+        }
+        return _position;
 }
 
 /** \brief Shell Command to read the Encoder position.
@@ -358,6 +397,49 @@ void setPosition(int argc, char *argv[])
 	Encoder.SetPosition(atoi(argv[1]));
 	//	Display the return message
 	avrPrintf("\r\nset_po OK\r\n");
+}
+
+
+/*
+ *  \brief Shell Command to configure the Encoder Detection Polarity.
+ *  This shell command is used to configure the Encoder polarity field.
+ *  \param [in] argc int Number of command arguments
+ *  \param [in] argv char[]* list of arguments
+ *  \return void
+ *
+ *  \details Please refer to EncoderClass polarity filed for more details.
+ */
+void setEncoderPolarity(int argc, char *argv[])
+{
+      (void)argv;
+      if(argc > 1)
+      {
+          Usage("encoder_pol <POS / NEG>");
+          avrPrintf("Error: encoder_pol\r\n");
+      }
+      else if(argc == 0)
+      {
+          if(!Encoder.polarity)
+          {
+              avrPrintf("encoder polarity: POSITIVE\r\n");
+          }
+          else
+          {
+              avrPrintf("encoder polarity: NEGATIVE\r\n");
+          }
+      }
+      else if(argc == 1)
+      {
+          if(!strcmp(argv[0], "POS"))
+          {
+              Encoder.polarity = 0;
+          }
+          else if(!strcmp(argv[0], "NEG"))
+          {
+              Encoder.polarity = 1;
+          }
+      }
+      avrPrintf("encoder_pol OK\r\n");
 }
 
 /*

@@ -52,7 +52,7 @@
 #define ENCODER_MAX_COUNT	floor(ENCODER_RESOLUTION * ENCODER_GEAR_RATIO)
 //	Encoder interface: A_ONLY, A_AND_B,  FULL
 #define ENCODER_IMPLEMENTATION	A_ONLY
-#define MAX_COUNT	16000				//	Max counts to make a full turn of the final gear
+#define MAX_COUNT	8000				//	Max counts to make a full turn of the final gear
 //#define ENCODER_SIMULATION			//	Activate the simulation of the encoder
 #define RETURN_ANGLE		0		//	0-> Activate the position return as circular buffer count
                                                 //	1-> Activate the position return as angle
@@ -86,6 +86,14 @@ class EncoderClass
      *
      */
 	uint32_t encoderMaxCount;				//	# of pulses to make a full turn of the final gear
+    /** \brief Encoder detection polarity
+     *
+     *  \details This variable allow the encoder to count up and down seamlessy from
+     *  the actual hardware connection. For instance, if after wiring the system it is
+     *  found that the encoder and slewing are inverted, setting up this fields
+     *  can fix the problem without the need of re-wiring.
+     */
+	uint8_t polarity;				//	# Encoder counts polarity detection (and direction)
     /** \brief Stores activation flag for the automatic step turning.
      *
      */
@@ -236,6 +244,17 @@ void getPosition(int argc, char *argv[]);	//	Shell command to read the encoder p
 void setPosition(int argc, char *argv[]);   // Shell command to set the encoder position
 void getState(int argc, char *argv[]);      // Shell command to get the actual slewing state
 void gearCfg(int argc, char *argv[]);       // Shell command to configure the encoder
+
+/**\fn  setEncoderPalarity(int argc, char *argv[])
+ *  \brief Shell Command to configure the Encoder Detection Polarity.
+ *  This shell command is used to configure the Encoder polarity field.
+ *  \param [in] argc int Number of command arguments
+ *  \param [in] argv char[]* list of arguments
+ *  \return void
+ *
+ *  \details Please refer to EncoderClass polarity filed for more details.
+ */
+void setEncoderPolarity(int argc, char *argv[]);
 
 /**\fn debugMode(int argc, char *argv[])
  *  \brief Shell Command to configure the Dome in debug mode.
