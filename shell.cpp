@@ -85,6 +85,14 @@ SEMAPHORE_DECL(SerialOutSem, 1);
 ///
 //////////////////////////////////////////////////////////////////////////
 
+int freeRam()
+{
+  extern int __heap_start, *__brkval;
+  int v;
+  
+  return (int) &v - (__brkval == 0 ? (int)& __heap_start : (int) __brkval);
+}
+
 /** \brief Shells  task code.
  *
  * \param p void* : Pointer to a data structure storing all implemented commands
@@ -106,7 +114,9 @@ void ShellTask(void *p, char *line)
 	lp = Strtok(line, " \r\n", &tokp);
 
 	#ifdef DEBUG
-	avrPrintf("lp -> ");
+avrPrintf("Input -> ");
+avrPrintf(line);
+	avrPrintf("\nlp -> ");
 	avrPrintf(lp);
 	avrPrintf("\ntokp -> ");
 	avrPrintf(tokp);

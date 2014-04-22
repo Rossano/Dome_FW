@@ -42,7 +42,7 @@
  * \def ENCODER_SIMULATION compile flag to activate the software simulation of the encoder (debug)
  * \def RETURN_ANGLE compile flag to set to provide the return position as angle (1) or as counter (0)
  */
-#define STACKSIZE	64				    //	Thread stacksize
+#define STACKSIZE	32//64				    //	Thread stacksize
 //
 //		Default definitions for the Encoder Configuration
 //
@@ -93,7 +93,7 @@ class EncoderClass
      *  found that the encoder and slewing are inverted, setting up this fields
      *  can fix the problem without the need of re-wiring.
      */
-	uint8_t polarity;				//	# Encoder counts polarity detection (and direction)
+//	uint8_t polarity;				//	# Encoder counts polarity detection (and direction)
     /** \brief Stores activation flag for the automatic step turning.
      *
      */

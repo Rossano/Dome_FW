@@ -196,6 +196,8 @@ void avrPrintf(const double val);                                               
 void ShellTask(void *p, char *line);                                            ///  Shell Task
 void CDC_Task();                                                                ///  USB CDC tas
 
+int freeRam();
+
 
 #endif
 

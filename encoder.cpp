@@ -149,7 +149,7 @@ void EncoderClass::init()
 	gearRatio = ENCODER_GEAR_RATIO;					//	Init system gear ratio
 	double foo = encoderResolution * gearRatio;
 	encoderMaxCount = MAX_COUNT;//15;//(uint32_t)foo;
-        polarity = 0;
+//        polarity = 0;
 	#ifdef DEBUG
 		avrPrintf("Encoder MAX cnt -> ");
 		avrPrintf(encoderMaxCount);
@@ -252,7 +252,7 @@ EncoderClass& EncoderClass::operator ++()
  */
 EncoderClass EncoderClass::operator ++(int)
 {
-        if(!polarity)
+//        if(!polarity)
         {          
   	  if(_position == encoderMaxCount)
 	  {
@@ -267,7 +267,7 @@ EncoderClass EncoderClass::operator ++(int)
 		//return _position;
 	  }
         }
-        else
+/*        else
         {
           	if(_position == 0)
 	        {
@@ -281,7 +281,7 @@ EncoderClass EncoderClass::operator ++(int)
 		  _position--;
 		  //return _position;
 	        }
-        }
+        }*/
         return _position;
 }
 
@@ -303,7 +303,7 @@ EncoderClass& EncoderClass::operator --()
  */
 EncoderClass EncoderClass::operator --(int)
 {
-        if(!polarity)
+//        if(!polarity)
         {
         	if(_position == 0)
 	        {
@@ -318,7 +318,7 @@ EncoderClass EncoderClass::operator --(int)
           //		return _position;
 	        }
         }
-        else
+/*        else
         {
                 if(_position == encoderMaxCount)
 	        {
@@ -332,7 +332,7 @@ EncoderClass EncoderClass::operator --(int)
         	      _position++;
   		//return _position;
         	}        
-        }
+        }*/
         return _position;
 }
 
@@ -409,7 +409,8 @@ void setPosition(int argc, char *argv[])
  *
  *  \details Please refer to EncoderClass polarity filed for more details.
  */
-void setEncoderPolarity(int argc, char *argv[])
+ void setEncoderPolarity(int argc, char *argv[]) {}
+/*void setEncoderPolarity(int argc, char *argv[])
 {
       (void)argv;
       if(argc > 1)
@@ -440,7 +441,7 @@ void setEncoderPolarity(int argc, char *argv[])
           }
       }
       avrPrintf("encoder_pol OK\r\n");
-}
+}*/
 
 /*
  *  \brief Shell Command to configure the Dome in debug mode.

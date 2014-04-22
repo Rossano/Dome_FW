@@ -31,14 +31,14 @@
 	#include <NilTimer1.h>	//	NilRTOS Timer
 	#include "debug.h"		//	Debug related inclusions
 #endif // DEBUG
-
+#define DEBUG
 //////////////////////////////////////////////////////////////////////////
 //
 //	Defines Section
 //
 //////////////////////////////////////////////////////////////////////////
 
-#define STACKSIZE	64			//	Thread stack size
+#define STACKSIZE	32//64			//	Thread stack size
 #define BAUDRATE	57600		//	Baudrate value
 
 //////////////////////////////////////////////////////////////////////////
@@ -155,6 +155,8 @@ void setup()
 	//	Starts NilRTOS scheduler
 	//
 	nilSysBegin();
+avrPrintf(freeRam());
+avrPrintf(CR);
 }
 
 ///<summary>
@@ -185,6 +187,7 @@ void loop()
 			cmdString.toCharArray(buf, CMD_STRING_LEN);
 			//	Execute the Shell task with the data coming for the PC
 			ShellTask((void *)ShellCommands, buf);
+avrPrintf(freeRam()); avrPrintf(CR);
 			//	Print the prompt
 			Serial.print(PROMPT);
 			//	Reinitialize the input buffer and the flag

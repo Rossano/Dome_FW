@@ -41,7 +41,7 @@
  * \param ROTATE_SLEEP sleep time (in ms) when slewing the dome
  *
  */
-#define STACKSIZE			64			//	Thread stack size
+#define STACKSIZE			32//64			//	Thread stack size
 #define ENCODER_RESOLUTION	1			//	NOT USED
 #define ROTATE_SLEEP		10			//	Sleep time while rotating
 
