@@ -35,19 +35,20 @@
  *
  */
 #define NULL						0					///	NULL definition (error trying to include from elsewhere
-#define SHELL_MAX_LINE_LENGTH       32					///	Shell input buffer length
+#define SHELL_MAX_LINE_LENGTH       16//32					///	Shell input buffer length
 #define SHELL_MAX_ARGUMENTS         4					///	Shell MAX number of arguments
 #define SHELL_PROMPT                "AVR> "				///	Shell prompt
 #define FW_VERSION                  "0.7.0.0"			///	Firmware Revision
 #define OS_VERSION                  NIL_KERNEL_VERSION	///	OS type and revision
 #define CR							"\r\n"				///	Shell EOL characters
-#define CMD_STRING_LEN				32					///	Command String Length
+#define CMD_STRING_LEN				16//32					///	Command String Length
 #define PROMPT						"AVR> "				///	Shell prompt
 #define SOL_LED						13					///	Sign of Life LED
 #undef USE_SHELL_THREAD									//	Activate/Deactivate the use of the shell as thread
 
 ///	Debug Activation/Deactivation
 #undef DEBUG
+//#define DEBUG
 
 //////////////////////////////////////////////////////////////////////////
 ///

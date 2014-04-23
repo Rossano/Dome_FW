@@ -41,7 +41,7 @@
 //#define ENCODER_SIMULATION					//	FLAG to simulate the Encoder
 #define DEBUG_TIMER_INTERVAL_US		29170 	//	Simulate Encoder time (1400 rpm) = 1400/60/80/100 (old 429) x 10 don't know why
 #undef TIMER_DEBUG							//	FLAG to activate the Simulated Encoder debug
-
+#define DEBUG_THD_STACKSIZE            32
 //
 //	If Encoder simulation is used it is mandatory to include the
 //	RTOS timer module
@@ -555,7 +555,7 @@ void stopEncoderTimer()
  * in oder to send a pulse to the code at a given laps of time
  *
  */
-NIL_WORKING_AREA(waDebugThread, 64);
+NIL_WORKING_AREA(waDebugThread, DEBUG_THD_STACKSIZE);
 
 /** \fn Debug Thread
  *  \brief Encoder Debug Thread
