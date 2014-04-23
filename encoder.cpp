@@ -251,38 +251,38 @@ EncoderClass& EncoderClass::operator ++()
  *
  */
 EncoderClass EncoderClass::operator ++(int)
-{
-//        if(!polarity)
-        {          
-  	  if(_position == encoderMaxCount)
-	  {
-		//	If max position is reached loop back to 0
-		_position = 0;
-		//return 0;
-	  }
-	  else
-	  {
-		//	Else simply increase it
-		_position++;
-		//return _position;
-	  }
-        }
-/*        else
-        {
-          	if(_position == 0)
-	        {
-		  //	If 0 is reached loop back to the MAX value
-		  _position = encoderMaxCount;
-		  //return encoderMaxCount;
-	        }
-	        else
-	        {
-		  //	else simply decrease
-		  _position--;
-		  //return _position;
-	        }
-        }*/
-        return _position;
+{	
+	if(polarity == POSITIVE)
+	{          
+		if(_position == encoderMaxCount)
+		{
+			//	If max position is reached loop back to 0
+			_position = 0;
+			//return 0;
+		}
+		else
+		{
+			//	Else simply increase it
+			_position++;
+			//return _position;
+		}
+	}
+	else
+	{
+		if(_position == 0)
+		{
+			//	If 0 is reached loop back to the MAX value
+			_position = encoderMaxCount;
+			//return encoderMaxCount;
+		}
+		else
+		{
+			//	else simply decrease
+			_position--;
+			//return _position;
+		}
+	}
+	return _position;
 }
 
 /* \brief Operator --
@@ -303,7 +303,7 @@ EncoderClass& EncoderClass::operator --()
  */
 EncoderClass EncoderClass::operator --(int)
 {
-//        if(!polarity)
+        if(polarity == POSITIVE)
         {
         	if(_position == 0)
 	        {
@@ -312,15 +312,15 @@ EncoderClass EncoderClass::operator --(int)
         //		return encoderMaxCount;
 	        }
         	else
-                {
-		      //	else simply decrease
-                      _position--;
+			{
+				//	else simply decrease
+				_position--;
           //		return _position;
 	        }
         }
-/*        else
+        else
         {
-                if(_position == encoderMaxCount)
+            if(_position == encoderMaxCount)
 	        {
 		      //	If max position is reached loop back to 0
         		_position = 0;
@@ -329,11 +329,21 @@ EncoderClass EncoderClass::operator --(int)
         	else
 	        {
 		      //	Else simply increase it
-        	      _position++;
+				_position++;
   		//return _position;
         	}        
-        }*/
+        }
         return _position;
+}
+
+void EncoderClass::setPolarity(encoderPolarity_t pol)
+{
+	polarity = pol;
+}
+
+encoderPolarity_t EncoderClass::getPolarity()
+{
+	return polarity;
 }
 
 /** \brief Shell Command to read the Encoder position.
@@ -409,8 +419,8 @@ void setPosition(int argc, char *argv[])
  *
  *  \details Please refer to EncoderClass polarity filed for more details.
  */
- void setEncoderPolarity(int argc, char *argv[]) {}
-/*void setEncoderPolarity(int argc, char *argv[])
+// void setEncoderPolarity(int argc, char *argv[]) {}
+void setEncoderPolarity(int argc, char *argv[])
 {
       (void)argv;
       if(argc > 1)
@@ -420,7 +430,8 @@ void setPosition(int argc, char *argv[])
       }
       else if(argc == 0)
       {
-          if(!Encoder.polarity)
+          //if(!Encoder.polarity)
+		  if(Encoder.getPolarity() == POSITIVE)
           {
               avrPrintf("encoder polarity: POSITIVE\r\n");
           }
@@ -433,15 +444,17 @@ void setPosition(int argc, char *argv[])
       {
           if(!strcmp(argv[0], "POS"))
           {
-              Encoder.polarity = 0;
+              //Encoder.polarity = 0;
+			  Encoder.setPolarity(POSITIVE);
           }
           else if(!strcmp(argv[0], "NEG"))
           {
-              Encoder.polarity = 1;
+              //Encoder.polarity = 1;
+			  Encoder.setPolarity(NEGATIVE);
           }
       }
       avrPrintf("encoder_pol OK\r\n");
-}*/
+}
 
 /*
  *  \brief Shell Command to configure the Dome in debug mode.

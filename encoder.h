@@ -57,6 +57,12 @@
 #define RETURN_ANGLE		0		//	0-> Activate the position return as circular buffer count
                                                 //	1-> Activate the position return as angle
 
+typedef enum
+{
+	POSITIVE,
+	NEGATIVE	
+} encoderPolarity_t;
+
 //////////////////////////////////////////////////////////////////////////
 //
 //	Class Definition Section
@@ -104,6 +110,8 @@ class EncoderClass
      */
 	uint32_t _position;						//	Actual absolute Encoder position
 
+	encoderPolarity_t polarity;
+	
  public:
 	/** \brief Default Constructor
      */
@@ -179,6 +187,9 @@ class EncoderClass
      *
      */
 	EncoderClass operator--(int);
+	
+	void setPolarity(encoderPolarity_t pol);
+	encoderPolarity_t getPolarity();
 };
 
 extern EncoderClass Encoder;
