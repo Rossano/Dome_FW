@@ -57,11 +57,13 @@
 //
 extern void EncoderThread(void * arg);
 extern NIL_WORKING_AREA(waEncoderThread, STACKSIZE);
+#ifdef USE_DOME_THD
 //
 //	Dome Control Thread
 //
 extern void DomeThread(void * arg);
 extern NIL_WORKING_AREA(waDomeThread, STACKSIZE);
+#endif
 //
 //	Shell Thread
 //
@@ -94,8 +96,10 @@ NIL_THREADS_TABLE_BEGIN()
 #endif // USE_SHELL_THREAD
 //	Encoder Thread
 NIL_THREADS_TABLE_ENTRY("Encoder", EncoderThread, NULL, waEncoderThread, sizeof(waEncoderThread))
+#ifdef USE_DOME_THD
 //	Dome Control Thread
 NIL_THREADS_TABLE_ENTRY("Dome", DomeThread, NULL, waDomeThread, sizeof(waDomeThread))
+#endif
 
 NIL_THREADS_TABLE_END()
 

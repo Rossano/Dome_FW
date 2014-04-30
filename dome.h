@@ -45,6 +45,8 @@
 #define ENCODER_RESOLUTION	1			//	NOT USED
 #define ROTATE_SLEEP		10			//	Sleep time while rotating
 
+#undef USE_DOME_THD
+
 //////////////////////////////////////////////////////////////////////////
 //
 //	Type Definition Section
@@ -155,7 +157,10 @@ class DomeClass
  *
  */
 
+#ifdef USE_DOME_THD
 extern NilFIFO<int16_t, 2> turnfifo;					//	FIFO used to pass the # of turning steps
+#endif
+
 /** \def DomeClass Dome
  *  \brief Dome class object
  *

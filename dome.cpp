@@ -30,7 +30,9 @@
 /* \brief FIRO to synchronize the Dome thread when slewing a fixed number of steps
  *
  */
+#ifdef USE_DOME_THD
 NilFIFO<int16_t, 2> turnfifo;				//	FIFO to unlock the Dome thread to turn a fix number of step
+#endif
 
 /* \brief Dome object data structure.
  *
@@ -194,6 +196,7 @@ void TurnLeft(int argc, char *argv[])
 	}
 	else
 	{
+        #ifdef USE_DOME_THD
 	    //	If there is an argument pass the number of steps to the FIFO
 		int16_t *p = turnfifo.waitFree(TIME_INFINITE);		//	Wait a free slot on the FIFO
 		#ifdef DEBUG
@@ -205,6 +208,7 @@ void TurnLeft(int argc, char *argv[])
 		#endif // DEBUG
 		*p = -1 * atoi(argv[0]);							//	Update the FIFO slot with the # of steps to turn (<0 -> left)
 		turnfifo.signalData();								//	Signal that there is a new data into the FIFO
+        #endif
 	}
 	avrPrintf("turn_left OK\r\n");							//	Tag successful operation to the serial port
 }
@@ -234,7 +238,9 @@ void TurnRight(int argc, char *argv[])
 //		avrPrintf("OK\r\n");
 	}
 	else
-	{	//	If there is an argument pass the number of steps to the FIFO
+	{
+        #ifdef USE_DOME_THD
+        	//	If there is an argument pass the number of steps to the FIFO
 		int16_t *p = turnfifo.waitFree(TIME_INFINITE);		//	Wait a free slot in the FIFO
 		*p = atoi(argv[0]);									//	Update the FIFO slot with the # of steps
 		#ifdef DEBUG
@@ -243,6 +249,7 @@ void TurnRight(int argc, char *argv[])
 			avrPrintf("\n");
 		#endif
 		turnfifo.signalData();								//	Signal that there is a new data into the FIFO
+        #endif
 	}
 	avrPrintf("turn_right OK\r\n");							//	Tag successful operation to the serial port
 }
@@ -403,6 +410,8 @@ void gearCfg(int argc, char *argv[])
 //	Thread Section
 //
 //////////////////////////////////////////////////////////////////////////
+
+#ifdef USE_DOME_THD
 
 //////////////////////////////////////////////////////////////////////////
 //	Dome Thread
@@ -565,3 +574,5 @@ NIL_THREAD(DomeThread, arg)
 		//avrPrintf("OK\r\n");
 	}
 }
+
+#endif
